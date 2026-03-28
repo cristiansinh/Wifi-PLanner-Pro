@@ -1,0 +1,5605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WiFi Planner Pro v3.3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* CSS VARIABLES */
+:root {
+  --bg: #08090d;
+  --p1: #0e1018;
+  --p2: #14161f;
+  --p3: #1a1d28;
+  --bd: #252838;
+  --bd2: #333750;
+  --t1: #e8ecf4;
+  --t2: #9aa0b8;
+  --t3: #5c6280;
+  --ac: #3b82f6;
+  --ac2: #60a5fa;
+  --g1: #22c55e;
+  --g2: #16a34a;
+  --r1: #ef4444;
+  --o1: #f59e0b;
+  --y1: #eab308;
+  --purple: #a855f7;
+  --cyan: #06b6d4;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Inter', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--t1);
+  overflow: hidden;
+  height: 100vh;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TOOLBAR */
+.tb {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: var(--p1);
+  border-bottom: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  z-index: 1000;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.tb::-webkit-scrollbar { height: 3px; }
+.tb::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 3px; }
+
+/* v3.2: Loading overlay */
+.loading-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; flex-direction: column; gap: 16px;
+}
+.loading-overlay .spinner {
+  width: 48px; height: 48px;
+  border: 4px solid var(--bd); border-top-color: var(--ac);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+.loading-overlay .msg { color: #fff; font-size: 14px; font-weight: 600; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* v3.2: Scale ruler */
+.scale-ruler {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.75); border-radius: 6px; padding: 4px 12px;
+  display: flex; align-items: center; gap: 8px; z-index: 500;
+  pointer-events: none;
+}
+.scale-ruler .bar { height: 4px; background: #fff; border-left: 2px solid #fff; border-right: 2px solid #fff; min-width: 40px; }
+.scale-ruler .lbl { color: #fff; font-size: 10px; font-weight: 700; font-family: var(--mono); white-space: nowrap; }
+
+.tb-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 14px;
+  border-right: 1px solid var(--bd);
+  margin-right: 8px;
+}
+
+.tb-brand svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--ac);
+}
+
+.tb-brand b {
+  font-size: 14px;
+  color: #fff;
+  letter-spacing: -.5px;
+}
+
+.tb-brand small {
+  font-size: 8px;
+  color: var(--t3);
+  font-weight: 700;
+  background: var(--purple);
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 7px;
+  border: 1px solid var(--bd);
+  background: var(--p2);
+  color: var(--t2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .12s;
+  font-family: var(--sans);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--p3);
+  color: #fff;
+  border-color: var(--bd2);
+  transform: translateY(-1px);
+}
+
+.btn.on {
+  background: var(--ac);
+  border-color: var(--ac);
+  color: #fff;
+}
+
+.btn.grn {
+  border-color: #1a3a1a;
+  color: var(--g1);
+}
+
+.btn.grn:hover {
+  background: var(--g2);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.sep {
+  width: 1px;
+  height: 28px;
+  background: var(--bd);
+  margin: 0 6px;
+}
+
+.sp { flex: 1; }
+
+.zm {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--t3);
+  min-width: 50px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.mg {
+  display: flex;
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.mg .btn {
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--bd);
+}
+
+.mg .btn:last-child { border-right: none; }
+
+/* PANEL */
+.panel {
+  position: fixed;
+  top: 52px;
+  left: 0;
+  bottom: 0;
+  width: 320px;
+  background: var(--p1);
+  border-right: 1px solid var(--bd);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.panel.hide {
+  transform: translateX(-320px);
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--bd);
+  background: var(--p2);
+}
+
+.tab {
+  flex: 1;
+  padding: 11px 4px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--t3);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all .15s;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+}
+
+.tab:hover {
+  color: var(--t2);
+  background: rgba(255, 255, 255, .03);
+}
+
+.tab.on {
+  color: var(--ac2);
+  border-bottom-color: var(--ac);
+  background: var(--p1);
+}
+
+.tc {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tc.on {
+  display: flex;
+  flex-direction: column;
+}
+
+.sec {
+  padding: 14px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.sec-t {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--t3);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* CANVAS */
+.cvs {
+  position: fixed;
+  top: 52px;
+  left: 320px;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: #060710;
+  cursor: grab;
+}
+
+.cvs.pan { cursor: grabbing; }
+.cvs.lp { left: 0; }
+.cvs.cross { cursor: crosshair; }
+.cvs.draw { cursor: crosshair; }
+.cvs.zone { cursor: crosshair; }
+
+.wrap {
+  position: absolute;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.wrap img {
+  display: block;
+  -webkit-user-drag: none;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+#heatCvs, #wavesCvs, #structCvs, #zonesCvs {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#heatCvs { z-index: 1; opacity: .65; }
+#wavesCvs { z-index: 2; opacity: .3; display: none; }
+#structCvs { z-index: 4; }
+#zonesCvs { z-index: 3; }
+
+/* WELCOME */
+.welcome {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 5;
+  pointer-events: none;
+  max-width: 500px;
+}
+
+.welcome svg {
+  width: 80px;
+  height: 80px;
+  fill: var(--bd);
+  margin-bottom: 24px;
+  opacity: .5;
+}
+
+.welcome h2 {
+  font-size: 22px;
+  color: var(--t3);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.welcome p {
+  font-size: 12px;
+  color: var(--t3);
+  line-height: 1.8;
+}
+
+.welcome .btn {
+  pointer-events: auto;
+  margin-top: 18px;
+  font-size: 12px;
+  padding: 10px 26px;
+}
+
+/* AP MARKERS */
+.mk {
+  position: absolute;
+  z-index: 10;
+  cursor: move;
+}
+
+.mk.sel { z-index: 20; }
+
+.mk .ac {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+  transition: transform .12s, box-shadow .12s;
+  border: 3px solid rgba(255, 255, 255, .25);
+}
+
+.mk:hover .ac {
+  transform: scale(1.12);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, .8);
+}
+
+.mk.sel .ac {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, .6), 0 6px 18px rgba(0, 0, 0, .8);
+  border-color: rgba(255, 255, 255, .5);
+}
+
+.ac svg {
+  fill: #fff;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .4));
+}
+
+.mk .tg {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, .94);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  font-family: var(--mono);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .6);
+}
+
+/* DRAWING TOOLS */
+.draw-preview {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.draw-point {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--ac);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px rgba(59, 130, 246, .6);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.3); }
+}
+
+.draw-line {
+  position: absolute;
+  background: var(--ac);
+  height: 3px;
+  transform-origin: 0 0;
+  box-shadow: 0 0 6px rgba(59, 130, 246, .5);
+  opacity: .8;
+}
+
+/* STRUCTURE EDITING */
+.struct-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--ac);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: move;
+  z-index: 60;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+}
+
+.struct-handle:hover {
+  transform: translate(-50%, -50%) scale(1.3);
+  background: var(--ac2);
+}
+
+/* SETTINGS */
+.sett {
+  margin-bottom: 12px;
+}
+
+.sett label {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--t3);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+}
+
+.sett input[type=range] {
+  width: 100%;
+  accent-color: var(--ac);
+  height: 5px;
+}
+
+.sett .rv {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ac2);
+  float: right;
+  margin-top: -18px;
+  font-weight: 600;
+}
+
+.sett input[type=text],
+.sett input[type=number],
+.sett select {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--p3);
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  color: var(--t1);
+  font-size: 11px;
+  font-family: var(--sans);
+  outline: none;
+  transition: border-color .15s;
+}
+
+.sett input:focus,
+.sett select:focus {
+  border-color: var(--ac);
+}
+
+.fr {
+  display: flex;
+  gap: 10px;
+}
+
+.fr .sett { flex: 1; }
+
+/* CARDS */
+.cb {
+  background: var(--p2);
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.cb .ct {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cb .cd {
+  font-size: 10px;
+  color: var(--t3);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+
+/* TEMPLATES */
+.tpl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--p2);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  cursor: grab;
+  border: 1px solid var(--bd);
+  transition: all .14s;
+}
+
+.tpl:hover {
+  border-color: var(--ac);
+  transform: translateX(3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+}
+
+.tpl:active {
+  cursor: grabbing;
+  transform: scale(.98);
+}
+
+.tpl .ic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tpl .ic svg {
+  width: 20px;
+  height: 20px;
+  fill: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+.tpl .inf {
+  flex: 1;
+}
+
+.tpl .inf .nm {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--t1);
+}
+
+.tpl .inf .ds {
+  font-size: 9px;
+  color: var(--t3);
+  margin-top: 3px;
+}
+
+/* STRUCTURE TYPES */
+.st {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  background: var(--p2);
+  border-radius: 7px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border: 1px solid var(--bd);
+  transition: all .14s;
+  font-size: 11px;
+}
+
+.st:hover {
+  border-color: var(--ac);
+  transform: translateX(3px);
+}
+
+.st.on {
+  border-color: var(--o1);
+  background: #1a1800;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, .2);
+}
+
+.st .dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.st .db {
+  font-family: var(--mono);
+  color: var(--o1);
+  font-size: 9px;
+  margin-left: auto;
+  font-weight: 700;
+}
+
+/* TOOL PALETTE */
+.tool-palette {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tool-btn {
+  padding: 10px;
+  background: var(--p2);
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .12s;
+  text-align: center;
+}
+
+.tool-btn:hover {
+  border-color: var(--ac);
+  background: var(--p3);
+}
+
+.tool-btn.on {
+  border-color: var(--ac);
+  background: var(--ac);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, .2);
+}
+
+.tool-btn .ic {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.tool-btn .nm {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* LISTS */
+.pl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 14px 5px;
+  background: var(--p2);
+  border-radius: 6px;
+  font-size: 11px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all .14s;
+}
+
+.pl:first-child { margin-top: 10px; }
+
+.pl:hover,
+.pl.sel {
+  border-color: var(--ac);
+  background: var(--p3);
+  transform: translateX(2px);
+}
+
+.pl .d {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pl .n {
+  flex: 1;
+  color: var(--t2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.pl .xb {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .12s;
+}
+
+.pl .xb:hover {
+  background: var(--r1);
+  color: #fff;
+}
+
+/* LEGEND */
+.legend {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  background: rgba(14, 16, 24, .98);
+  border: 1px solid var(--bd);
+  border-radius: 11px;
+  padding: 14px 16px;
+  z-index: 800;
+  display: none;
+  min-width: 240px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .6);
+}
+
+.legend.show { display: block; }
+
+.legend-t {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--t2);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+}
+
+.legend-bar {
+  width: 100%;
+  height: 16px;
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  font-family: var(--mono);
+  color: var(--t3);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--t2);
+  margin-bottom: 5px;
+}
+
+.legend-row .lc {
+  width: 18px;
+  height: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.legend-row .lt { flex: 1; }
+
+.legend-row .lv {
+  font-family: var(--mono);
+  color: var(--t3);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+/* MODALS */
+.mo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .75);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+}
+
+.mo.show { display: flex; }
+
+.mod {
+  background: var(--p1);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  padding: 24px;
+  width: 460px;
+  max-width: 90vw;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .8);
+}
+
+.mod h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.mod-act {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  justify-content: flex-end;
+}
+
+.mod-act button {
+  padding: 8px 18px;
+  border-radius: 7px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all .14s;
+}
+
+.bxc {
+  background: var(--p2);
+  color: #aaa;
+}
+
+.bxc:hover {
+  background: var(--p3);
+  transform: translateY(-1px);
+}
+
+.bxs {
+  background: var(--ac);
+  color: #fff;
+}
+
+.bxs:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* CONTEXT MENU */
+.ctx {
+  position: fixed;
+  background: var(--p1);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  padding: 5px;
+  z-index: 3000;
+  display: none;
+  min-width: 180px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .7);
+}
+
+.ctx.show { display: block; }
+
+.ctx-i {
+  padding: 7px 13px;
+  font-size: 12px;
+  color: var(--t2);
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all .12s;
+}
+
+.ctx-i:hover {
+  background: var(--p2);
+  color: #fff;
+}
+
+.ctx-i.rd {
+  color: #f87171;
+}
+
+.ctx-i.rd:hover {
+  background: #1a0a0a;
+  color: var(--r1);
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--p2);
+  border: 1px solid var(--bd);
+  padding: 10px 22px;
+  border-radius: 9px;
+  font-size: 12px;
+  color: var(--t2);
+  z-index: 5000;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .6);
+  font-weight: 500;
+}
+
+.toast.show { opacity: 1; }
+
+/* PROGRESS */
+.pbar {
+  position: fixed;
+  top: 52px;
+  left: 320px;
+  right: 0;
+  height: 3px;
+  z-index: 1001;
+  background: transparent;
+}
+
+.pbar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ac), var(--ac2));
+  width: 0;
+  transition: width .5s;
+  box-shadow: 0 0 10px rgba(59, 130, 246, .6);
+}
+
+/* PROJECT STATUS */
+.project-status {
+  font-size: 9px;
+  color: var(--t3);
+  font-family: var(--mono);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-status .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--g1);
+}
+
+.project-status.modified .dot {
+  background: var(--o1);
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+/* SCROLLBAR */
+.tc::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tc::-webkit-scrollbar-track {
+  background: var(--p1);
+}
+
+.tc::-webkit-scrollbar-thumb {
+  background: var(--bd2);
+  border-radius: 5px;
+}
+
+.tc::-webkit-scrollbar-thumb:hover {
+  background: var(--bd);
+}
+
+/* LOADING SPINNER */
+.spinner {
+  border: 4px solid var(--p3);
+  border-top: 4px solid var(--ac);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* RESPONSIVE */
+@media (max-width: 1400px) {
+  .panel { width: 280px; }
+  .cvs { left: 280px; }
+  .pbar { left: 280px; }
+}
+
+/* PERFORMANCE */
+.cvs * { will-change: auto; }
+.mk { will-change: transform; }
+canvas { image-rendering: -webkit-optimize-contrast; }
+
+/* SECTION VIEW */
+.section-view {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  width: 360px;
+  height: 210px;
+  background: rgba(14,16,24,.92);
+  border: 1px solid var(--bd2);
+  border-radius: 10px;
+  z-index: 1500;
+  display: none;
+  overflow: hidden;
+}
+.section-view.show { display: block; }
+.section-view .hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--bd);
+  font-size: 11px;
+  color: var(--t2);
+}
+.section-view canvas { width: 100%; height: calc(100% - 34px); display: block; }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="tb">
+  <div class="tb-brand">
+    <svg viewBox="0 0 24 24">
+      <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+    </svg>
+    <b>WiFi Planner</b>
+    <small>v3.3</small>
+  </div>
+
+  <div class="mg">
+    <button class="btn" onclick="newProject()" data-i18n-title="tt_new" data-i18n="new" title="New (Ctrl+N)">New</button>
+    <button class="btn" onclick="loadProject()" data-i18n-title="tt_open" data-i18n="open" title="Open (Ctrl+O)">Open</button>
+    <button class="btn" onclick="saveProject()" data-i18n-title="tt_save" data-i18n="save" title="Save (Ctrl+S)">Save</button>
+  </div>
+
+  <div class="sep"></div>
+
+  <button class="btn" onclick="togPanel()" data-i18n-title="tt_panel" data-i18n="panel" title="Side panel">Panel</button>
+
+  <div class="sep"></div>
+
+  <div class="mg">
+    <button class="btn on" id="mSel" onclick="setMode('select')" data-i18n-title="tt_move" data-i18n="move" title="Move (V)">Move</button>
+    <button class="btn" id="mCal" onclick="setMode('calibrate')" data-i18n-title="tt_scale" data-i18n="scale" title="Calibrate scale">Scale</button>
+    <button class="btn" id="mDraw" onclick="setMode('draw')" data-i18n-title="tt_draw" data-i18n="draw" title="Draw (D)">Draw</button>
+  </div>
+
+  <div class="sep"></div>
+
+  <button class="btn" onclick="zI()" title="Zoom +">+</button>
+  <span class="zm" id="zmT">100%</span>
+  <button class="btn" onclick="zO()" title="Zoom -">-</button>
+  <button class="btn" onclick="fit()" data-i18n-title="tt_fit" title="Fit (F)">Fit</button>
+
+  <div class="sep"></div>
+
+  <button class="btn on" id="bH" onclick="togH()" data-i18n-title="tt_heatmap" data-i18n="heat" title="Heatmap (H)">Heat</button>
+  <button class="btn" id="bW" onclick="togW()" data-i18n-title="tt_waves" data-i18n="waves" title="Waves">Waves</button>
+
+  <div class="sep"></div>
+
+  <div class="mg">
+    <button class="btn" id="b24" onclick="setBand(24)">2.4G</button>
+    <button class="btn on" id="b5" onclick="setBand(5)">5G</button>
+  </div>
+
+  <div class="sp"></div>
+
+  <div class="project-status" id="projStatus">
+    <div class="dot"></div>
+    <span id="projName" data-i18n="untitled">Untitled</span>
+  </div>
+
+  <div class="sep"></div>
+
+  <button class="btn grn" onclick="doPNG()" data-i18n-title="tt_export_png" title="Export PNG">PNG</button>
+  <button class="btn" onclick="exportProfessionalReport()" data-i18n-title="tt_report" data-i18n="report" title="Technical report">Report</button>
+  <button class="btn" onclick="runDesignValidator()" data-i18n-title="tt_validate" data-i18n="validate" title="Validate design">Validate</button>
+  <button class="btn" id="langBtn" onclick="toggleLanguage()" style="font-weight:800;font-size:12px">ES</button>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="pbar" id="pbar"><div class="fill" id="pbarFill"></div></div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+  <div class="tabs">
+    <div class="tab on" onclick="stab(0)" data-i18n="tab_aps">📡 APs</div>
+    <div class="tab" onclick="stab(1)" data-i18n="tab_scale">📏 Scale</div>
+    <div class="tab" onclick="stab(2)" data-i18n="tab_draw">✏️ Draw</div>
+    <div class="tab" onclick="stab(3)" data-i18n="tab_zones">🗺️ Zones</div>
+    <div class="tab" onclick="stab(4)" data-i18n="tab_style">🎨 Style</div>
+    <div class="tab" onclick="stab(5)" data-i18n="tab_config">⚙️ Config</div>
+  </div>
+
+  <!-- TAB 0: APs -->
+  <div class="tc on" id="t0">
+    <div class="sec">
+      <div class="sec-t" data-i18n="drag_to_plan">Drag to floor plan</div>
+      
+      <div class="tpl" draggable="true" ondragstart="tDrag(event,'fortiap431f')" onclick="applyAPModel('431f')">
+        <div class="ic" style="background: #0079BF;">
+          <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        </div>
+        <div class="inf">
+          <div class="nm">FortiAP 431F</div>
+          <div class="ds">WiFi 6 · 23dBm · ~35m</div>
+        </div>
+      </div>
+
+      <div class="tpl" draggable="true" ondragstart="tDrag(event,'fortiap421e')" onclick="applyAPModel('421e')">
+        <div class="ic" style="background: #2E7D32;">
+          <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        </div>
+        <div class="inf">
+          <div class="nm">FortiAP 421E</div>
+          <div class="ds">WiFi 5 · 18dBm · ~25m</div>
+        </div>
+      </div>
+    </div>
+    
+    <div style="flex:1;overflow-y:auto">
+      <div class="sec-t" style="padding:12px 14px 0">
+        <span><span data-i18n="placed">Placed</span> (<span id="cnt">0</span>)</span>
+        <button class="btn" style="margin-left:auto;font-size:9px;padding:4px 10px" onclick="clearAllAPs()">🗑️</button>
+      </div>
+      <div id="apList"></div>
+    </div>
+  </div>
+
+  <!-- TAB 1: Scale -->
+  <div class="tc" id="t1">
+    <div class="sec">
+      <div class="cb">
+        <div class="ct" data-i18n="scale_config">📐 Scale Configuration</div>
+        <div class="cd" data-i18n="scale_desc">Set the scale and DPI of the architectural plan</div>
+        
+        <div class="fr">
+          <div class="sett">
+            <label data-i18n="scale_1x">Scale (1:X)</label>
+            <select id="pScale" onchange="applyScale()">
+              <option value="25">1:25</option>
+              <option value="50">1:50</option>
+              <option value="75">1:75</option>
+              <option value="100" selected>1:100</option>
+              <option value="150">1:150</option>
+              <option value="200">1:200</option>
+              <option value="500">1:500</option>
+            </select>
+          </div>
+          
+          <div class="sett">
+            <label>DPI</label>
+            <select id="pDPI" onchange="applyScale()">
+              <option value="72">72</option>
+              <option value="96">96</option>
+              <option value="150" selected>150</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+            </select>
+          </div>
+        </div>
+        
+        <button class="btn on" style="width:100%;justify-content:center;margin-top:6px" onclick="applyScale()" data-i18n="apply">✅ Apply</button>
+      </div>
+      
+      <div class="cb">
+        <div class="ct" data-i18n="manual_calibration">📏 Manual Calibration</div>
+        <div class="cd" data-i18n="manual_cal_desc">Click 2 points on the plan whose real distance you know</div>
+        
+        <button class="btn" style="width:100%;justify-content:center;margin-bottom:10px" onclick="setMode('calibrate')" data-i18n="calibrate">🎯 Calibrate</button>
+        
+        <div class="sett">
+          <label data-i18n="distance_m">Distance (meters)</label>
+          <input type="number" id="calD" value="10" min="0.1" step="0.1" onchange="updCal()">
+        </div>
+        
+        <div style="font-size:10px;color:var(--t3);margin-top:8px;padding:8px;background:var(--p3);border-radius:6px">
+          <span id="calSt" data-i18n="using_direct_scale">⏳ Using direct scale</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Drawing Tools -->
+  <div class="tc" id="t2">
+    <div class="sec">
+      <div class="sec-t" data-i18n="drawing_tools">Drawing tools</div>
+
+      <div class="tool-palette" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div class="tool-btn on" id="toolRect" onclick="setDrawTool('rect')" data-i18n-title="tt_block" title="Solid rectangle [R]" style="flex:1;min-width:70px;text-align:center;cursor:pointer;padding:6px;border-radius:6px;border:1px solid var(--bd)">
+          <div class="ic">⬜</div>
+          <div class="nm" style="font-size:10px" data-i18n="block">Block</div>
+        </div>
+        <div class="tool-btn" id="toolWall" onclick="setDrawTool('wall')" data-i18n-title="tt_room" title="Room/Walls [W]" style="flex:1;min-width:70px;text-align:center;cursor:pointer;padding:6px;border-radius:6px;border:1px solid var(--bd)">
+          <div class="ic">🔲</div>
+          <div class="nm" style="font-size:10px" data-i18n="room">Room</div>
+        </div>
+        <div class="tool-btn" id="toolLine" onclick="setDrawTool('line')" data-i18n-title="tt_wall" title="Wall/Line [L]" style="flex:1;min-width:70px;text-align:center;cursor:pointer;padding:6px;border-radius:6px;border:1px solid var(--bd)">
+          <div class="ic">📐</div>
+          <div class="nm" style="font-size:10px" data-i18n="wall">Wall</div>
+        </div>
+      </div>
+
+      <div id="drawToolHelp" class="cd" style="font-size:10px;padding:8px;background:var(--p3);border-radius:6px;margin-top:8px;margin-bottom:10px;line-height:1.5;color:var(--t2)" data-i18n="draw_help">
+        <b>Block:</b> solid area (rack, column). <b>Room:</b> draws 4 walls automatically. <b>Wall:</b> single line.
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t" data-i18n="structure_type">📦 Structure Type</div>
+
+      <div class="st" id="stwall" onclick="setST('wall')">
+        <div class="dot" style="background:#8B4513"></div>
+        <span data-i18n="concrete">Concrete</span>
+        <span class="db">-8dB</span>
+      </div>
+
+      <div class="st" id="stbrick" onclick="setST('brick')">
+        <div class="dot" style="background:#CD853F"></div>
+        <span data-i18n="brick">Brick</span>
+        <span class="db">-10dB</span>
+      </div>
+
+      <div class="st" id="stdrywall" onclick="setST('drywall')">
+        <div class="dot" style="background:#9E9E9E"></div>
+        <span data-i18n="drywall">Drywall</span>
+        <span class="db">-3dB</span>
+      </div>
+
+      <div class="st" id="stglass" onclick="setST('glass')">
+        <div class="dot" style="background:#0288D1"></div>
+        <span data-i18n="glass">Glass</span>
+        <span class="db">-3dB</span>
+      </div>
+
+      <div class="st" id="stwood" onclick="setST('wood')">
+        <div class="dot" style="background:#DEB887"></div>
+        <span data-i18n="wood">Wood</span>
+        <span class="db">-4dB</span>
+      </div>
+
+      <div class="st on" id="strack_metal" onclick="setST('rack_metal')">
+        <div class="dot" style="background:#37474F"></div>
+        <span data-i18n="rack">Shelving/Rack</span>
+        <span class="db">-12dB</span>
+      </div>
+
+      <div id="rackDensityPanel" class="sett" style="margin:8px 0;padding:8px;background:var(--p3);border-radius:6px;">
+        <label style="font-size:11px" data-i18n="rack_fill">Rack fill level<span class="rv" id="rackDensv">80%</span></label>
+        <input type="range" id="rackDensity" min="10" max="100" step="10" value="80" oninput="rackDensv.textContent=this.value+'%'">
+        <div style="font-size:9px;color:var(--t3);margin-top:4px" data-i18n="rack_fill_desc">10%=empty | 50%=half | 80%=full boxes | 100%=solid</div>
+      </div>
+
+      <div class="st" id="stmetal" onclick="setST('metal')">
+        <div class="dot" style="background:#37474F"></div>
+        <span data-i18n="metal_door">Metal/Door</span>
+        <span class="db">-20dB</span>
+      </div>
+
+      <div class="st" id="stelevator" onclick="setST('elevator')">
+        <div class="dot" style="background:#111"></div>
+        <span data-i18n="column_elevator">Column/Elevator</span>
+        <span class="db">-25dB</span>
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t">
+        <span><span data-i18n="drawn">Drawn</span> (<span id="stCnt">0</span>)</span>
+        <button class="btn" style="margin-left:auto;font-size:9px;padding:4px 10px" onclick="clrST()">🗑️</button>
+      </div>
+      <div id="stList" style="max-height:250px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Zones -->
+  <div class="tc" id="t3">
+    <div class="sec">
+      <div class="sec-t" data-i18n="plan_zones">🗺️ Floor Plan Zones</div>
+
+      <button class="btn on" style="width:100%;justify-content:center;margin-bottom:12px" onclick="startDrawZone()" data-i18n="draw_new_zone">
+        ➕ Draw new zone
+      </button>
+
+      <div class="note" style="font-size:10px;color:var(--t3);margin-bottom:12px;line-height:1.4;" data-i18n="zone_help">
+        💡 Draw polygons to define different areas (office, warehouse, etc.). Click on vertices, <b>Enter</b> to finish.
+      </div>
+
+      <div id="zonesList" style="max-height:320px;overflow-y:auto;">
+        <div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">
+          <span data-i18n="no_zones">No zones defined</span><br>
+          <span data-i18n="draw_zone_start">Draw a zone to get started</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t" data-i18n="zone_config">⚙️ Zone Configuration</div>
+
+      <div id="zoneConfigPanel" style="display:none;">
+        <div class="sett">
+          <label data-i18n="zone_name">Zone name</label>
+          <input type="text" id="zoneNameInput" data-i18n-placeholder="zone_name_ph" placeholder="E.g.: Main Warehouse" style="width:100%;padding:8px;background:var(--p2);border:1px solid var(--bd);color:var(--t1);border-radius:6px;">
+        </div>
+
+        <div class="sett">
+          <label data-i18n="env_type">Environment type</label>
+          <select id="zoneEnvType" onchange="updateZoneEnv()">
+            <option value="almacen_textil_peru" data-i18n="textile_warehouse">Textile Warehouse</option>
+            <option value="oficina_peru" data-i18n="typical_office">Typical Office</option>
+            <option value="retail_peru" data-i18n="retail_store">Retail/Store</option>
+            <option value="office" data-i18n="open_office">Open Office</option>
+            <option value="warehouse" data-i18n="warehouse_generic">Warehouse</option>
+            <option value="industrial" data-i18n="industrial">Industrial</option>
+            <option value="custom" data-i18n="custom">Custom</option>
+          </select>
+        </div>
+
+        <div class="sett">
+          <label data-i18n="ceiling_height_zone">Ceiling height in this zone (m)<span class="rv" id="zoneCeilingv">5.5</span></label>
+          <input type="range" id="zoneCeilingH" min="2.5" max="12.0" step="0.5" value="5.5" oninput="zoneCeilingv.textContent=this.value">
+        </div>
+
+        <!-- Path Loss oculto: se configura automaticamente por tipo de ambiente -->
+        <input type="hidden" id="zonePle" value="3.8">
+        <span id="zonePlev" style="display:none">3.8</span>
+
+        <div class="sett">
+          <label data-i18n="zone_color">Zone color</label>
+          <input type="color" id="zoneColorInput" value="#3b82f6" style="height:40px;width:100%;">
+        </div>
+
+        <button class="btn on" style="width:100%;justify-content:center;margin-top:12px" onclick="saveZoneConfig()" data-i18n="save_config">
+          Save configuration
+        </button>
+
+        <button class="btn" style="width:100%;justify-content:center;margin-top:8px;background:var(--r1);border-color:var(--r1)" onclick="deleteCurrentZone()" data-i18n="delete_zone">
+          Delete zone
+        </button>
+      </div>
+      
+      <div id="zoneConfigEmpty" style="text-align:center;padding:20px;color:var(--t3);font-size:11px;" data-i18n="select_zone">
+        Select a zone from the list
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t" data-i18n="visualization">👁️ Visualization</div>
+
+      <div class="sett">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="showZoneBorders" checked onchange="toggleZoneBorders(this.checked)">
+          <span data-i18n="show_zone_borders">Show zone borders</span>
+        </label>
+      </div>
+
+      <div class="sett">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="showZoneLabels" checked onchange="toggleZoneLabels(this.checked)">
+          <span data-i18n="show_zone_names">Show zone names</span>
+        </label>
+      </div>
+
+      <div class="sett">
+        <label><span data-i18n="zone_opacity">Zone opacity</span><span class="rv" id="zoneOpacv">0.20</span></label>
+        <input type="range" id="zoneOpac" min="0" max="100" value="20" oninput="zoneOpacv.textContent=(this.value/100).toFixed(2);updateZoneOpacity(this.value/100)">
+      </div>
+
+      <div id="zoneStats" style="margin-top:10px;padding:8px;background:var(--p3);border-radius:6px;font-size:10px;color:var(--t2);line-height:1.35;" data-i18n="no_zone_stats">
+        No zone statistics
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Style -->
+  <div class="tc" id="t4">
+    <div class="sec">
+      <div class="sec-t" data-i18n="struct_library">📚 Structure Library</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn" onclick="applyStructurePreset('rack_textil_3m')" data-i18n="rack_3m">Rack 3m</button>
+        <button class="btn" onclick="applyStructurePreset('rack_textil_4m')" data-i18n="rack_4m">Rack 4m</button>
+        <button class="btn" onclick="applyStructurePreset('col_concreto')" data-i18n="column">Column</button>
+        <button class="btn" onclick="applyStructurePreset('wall_full')" data-i18n="full_wall">Full wall</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t" data-i18n="ap_appearance">🎨 AP Appearance</div>
+
+      <div class="sett">
+        <label><span data-i18n="icon_size">Icon size (px)</span><span class="rv" id="isv">52</span></label>
+        <input type="range" id="isz" min="28" max="600" value="52" oninput="isv.textContent=this.value;setIS(+this.value)">
+      </div>
+      
+      <div class="sett">
+        <label data-i18n="default_color">Default color</label>
+        <input type="color" id="defaultColor" value="#2E7D32" onchange="setDefaultColor(this.value)" style="height:40px">
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t" data-i18n="wifi_waves">〰️ WiFi Waves</div>
+
+      <div class="sett">
+        <label><span data-i18n="speed">Speed</span><span class="rv" id="wsv">1.0</span></label>
+        <input type="range" id="wSpeed" min="0.3" max="3" step="0.1" value="1" oninput="wsv.textContent=this.value;setWaveSpeed(+this.value)">
+      </div>
+      
+      <div class="sett">
+        <label><span data-i18n="opacity">Opacity</span><span class="rv" id="wov">0.30</span></label>
+        <input type="range" id="wOpac" min="0" max="100" value="30" oninput="wov.textContent=(this.value/100).toFixed(2);setWaveOpacity(this.value/100)">
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: Config -->
+  <div class="tc" id="t5">
+    <div class="sec">
+      <div class="sec-t" data-i18n="plan_file">🗺️ Floor Plan File</div>
+      <button class="btn on" style="width:100%;justify-content:center" onclick="loadPlan()" data-i18n="load_plan">
+        📄 Load plan (PDF/Image)
+      </button>
+      <div style="font-size:9px;color:var(--t3);margin-top:8px;text-align:center" data-i18n="supports">
+        Supports: PDF, PNG, JPG, BMP
+      </div>
+    </div>
+    
+    <div class="sec">
+      <div class="sec-t" data-i18n="ap_model_rf">📻 AP Model — RF</div>
+
+      <div class="sett">
+        <label data-i18n="ap_model">AP Model</label>
+        <select id="apModel" onchange="applyAPModel(this.value)">
+          <option value="431f" selected>Fortinet FAP-431F (WiFi 6)</option>
+          <option value="421e">Fortinet FAP-421E (WiFi 5)</option>
+          <option value="432f">Fortinet FAP-432F (WiFi 6)</option>
+          <option value="ubnt_ac_pro">Ubiquiti UAP-AC-Pro</option>
+          <option value="custom" data-i18n="customized">⚙️ Custom</option>
+        </select>
+      </div>
+
+      <div class="note" style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.3;" data-i18n="legal_limits">
+        ⚠️ <b>Legal limits (regulatory):</b><br>
+        2.4GHz: max 30 dBm EIRP<br>
+        5GHz UNII-1/2: max 23 dBm EIRP
+      </div>
+
+      <div class="sett">
+        <label data-i18n="tx_24">Tx 2.4GHz (dBm)<span class="rv" id="tx24v">20</span></label>
+        <input type="range" id="tx24" min="3" max="30" value="20" oninput="tx24v.textContent=this.value;document.getElementById('apModel').value='custom';validateOSIPTEL();reH()">
+        <div id="tx24warning" style="display:none;font-size:9px;color:#f59e0b;margin-top:4px;" data-i18n="tx24_warning">
+          ⚠️ Exceeds legal limit (30 dBm EIRP)
+        </div>
+      </div>
+
+      <div class="sett">
+        <label data-i18n="tx_5">Tx 5GHz (dBm)<span class="rv" id="tx5v">23</span></label>
+        <input type="range" id="tx5" min="3" max="30" value="23" oninput="tx5v.textContent=this.value;document.getElementById('apModel').value='custom';validateOSIPTEL();reH()">
+        <div id="tx5warning" style="display:none;font-size:9px;color:#f59e0b;margin-top:4px;" data-i18n="tx5_warning">
+          ⚠️ Exceeds UNII-1/2 limit (23 dBm EIRP)
+        </div>
+      </div>
+
+      <div class="sett">
+        <label data-i18n="gain">Gain (dBi)<span class="rv" id="agv">5</span></label>
+        <input type="range" id="ag" min="0" max="10" value="5" oninput="agv.textContent=this.value;document.getElementById('apModel').value='custom';validateOSIPTEL();reH()">
+      </div>
+
+      <div class="sett">
+        <label data-i18n="sensitivity">Sensitivity (dBm)<span class="rv" id="rsv">-85</span></label>
+        <input type="range" id="rs" min="-100" max="-60" value="-85" oninput="rsv.textContent=this.value;reH()">
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t" data-i18n="env_config">🏢 Environment Configuration</div>
+
+      <div class="sett">
+        <label data-i18n="env_type_label">Environment type</label>
+        <select id="envType" onchange="setEnvironment(this.value)">
+          <option value="almacen_textil_peru" selected data-i18n="textile_warehouse_full">Textile Warehouse</option>
+          <option value="oficina_peru" data-i18n="typical_office_full">Typical Office</option>
+          <option value="retail_peru" data-i18n="retail_store_full">Retail/Store</option>
+          <option value="office" data-i18n="office_open">Open Office</option>
+          <option value="office_walls" data-i18n="office_walls">Office w/ partitions</option>
+          <option value="retail" data-i18n="retail_general">General Retail</option>
+          <option value="warehouse" data-i18n="warehouse_wh">Warehouse</option>
+          <option value="industrial" data-i18n="industrial_env">Industrial</option>
+        </select>
+      </div>
+
+      <div class="sett">
+        <label data-i18n="ceiling_height">Ceiling height (m)<span class="rv" id="ceilingv">5.5</span></label>
+        <input type="range" id="ceilingH" min="2.5" max="12.0" step="0.5" value="5.5" oninput="ceilingv.textContent=this.value;ceilingHeight=parseFloat(this.value);globalCeilingSource='manual';if(apMountHeight>ceilingHeight){apMountHeight=ceilingHeight;document.getElementById('apMountH').value=apMountHeight;document.getElementById('apMountv').textContent=apMountHeight.toFixed(1);applyAPMountHeight();}document.getElementById('apMountH').max=this.value;updateZoneStats();reH()">
+      </div>
+
+      <div class="sett">
+        <label>Altura del AP (m)<span class="rv" id="apMountv">4.5</span></label>
+        <input type="range" id="apMountH" min="1.5" max="8.0" step="0.1" value="4.5" oninput="apMountv.textContent=this.value;apMountHeight=parseFloat(this.value);applyAPMountHeight();updateZoneStats();reH()">
+      </div>
+
+      <div class="sett">
+        <label>Alcance maximo (m)<span class="rv" id="maxRv">25</span></label>
+        <input type="range" id="maxR" min="10" max="50" step="5" value="25" oninput="maxRv.textContent=this.value;reH()">
+      </div>
+
+      <div class="sett">
+        <label>Modo de ajuste</label>
+        <select id="uiMode" onchange="setUIMode(this.value)">
+          <option value="basic" selected>Basico (recomendado)</option>
+          <option value="advanced">Avanzado (experto)</option>
+        </select>
+      </div>
+
+      <div id="advancedControls" style="display:none;">
+        <div class="sett">
+          <label>Perdida por entorno (n)<span class="rv" id="plev">3.8</span></label>
+          <input type="range" id="ple" min="2.0" max="5.0" step="0.1" value="3.8" oninput="plev.textContent=this.value;reH()">
+        </div>
+        <div class="note" style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4;">
+          2.0 = espacio abierto | 3.0 = oficina | 3.8 = almacen | 4.5 = industrial pesado
+        </div>
+      </div>
+    </div>
+
+    <button class="btn on" style="width:100%;justify-content:center;margin-top:8px;padding:10px" onclick="applyConfigAndRender()">
+      Aplicar y recalcular
+    </button>
+
+    <!-- Hidden: mantiene compatibilidad con save/load -->
+    <input type="hidden" id="deviceH" value="1.0">
+    <span id="devicev" style="display:none">1.0</span>
+    
+    <div class="sec">
+      <div class="sec-t">🎨 Visualización</div>
+      
+      <div class="sett">
+        <label>Opacidad heatmap<span class="rv" id="hov">0.65</span></label>
+        <input type="range" id="hoR" min="0" max="100" value="65" oninput="hov.textContent=(this.value/100).toFixed(2);hCvs.style.opacity=this.value/100">
+      </div>
+      
+      <div class="sett">
+        <label>Resolución (px)<span class="rv" id="hrv">5</span></label>
+        <input type="range" id="hrR" min="3" max="16" value="5" oninput="hrv.textContent=this.value;reH()">
+      </div>
+      
+      <div class="sett">
+        <label>Rendimiento</label>
+        <select id="quality" onchange="setQuality(this.value)">
+          <option value="low">Bajo (rápido - 20+ APs)</option>
+          <option value="medium" selected>Medio (balanceado)</option>
+          <option value="high">Alto (lento - mejor calidad)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CANVAS -->
+<div class="cvs" id="cvs">
+  <div class="wrap" id="wrap">
+    <img id="pImg" style="display:none" />
+    <canvas id="heatCvs"></canvas>
+    <canvas id="wavesCvs"></canvas>
+    <canvas id="structCvs"></canvas>
+    <canvas id="zonesCvs"></canvas>
+    
+    <div class="welcome" id="welcome">
+      <svg viewBox="0 0 24 24">
+        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+      </svg>
+      <h2>WiFi Planner Pro v3.1</h2>
+      <p>
+        Sistema profesional de planificación WiFi para Perú<br>
+        ✨ Alturas 3D • Dual-band • Fortinet FAP-431F • Almacenes textiles
+      </p>
+      <button class="btn on" onclick="loadPlan()">📄 Cargar plano (PDF/Imagen)</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGEND -->
+<!-- v3.2: Regla de escala visual -->
+<div class="scale-ruler" id="scaleRuler" style="display:none">
+  <div class="bar" id="rulerBar"></div>
+  <div class="lbl" id="rulerLbl">10m</div>
+</div>
+
+<div class="legend" id="legend">
+  <div class="legend-t">Cobertura WiFi — dBm</div>
+  <div class="legend-bar" style="background:linear-gradient(90deg,#00c853,#76ff03,#ffeb3b,#ff9800,#f44336,#880e4f)"></div>
+  <div class="legend-labels">
+    <span>-30</span>
+    <span>-50</span>
+    <span>-67</span>
+    <span>-80</span>
+    <span>-90</span>
+  </div>
+  <div style="margin-top:10px;border-top:1px solid var(--bd);padding-top:10px">
+    <div class="legend-row">
+      <div class="lc" style="background:#00c853"></div>
+      <div class="lt">Excelente</div>
+      <div class="lv">> -50</div>
+    </div>
+    <div class="legend-row">
+      <div class="lc" style="background:#76ff03"></div>
+      <div class="lt">Muy buena</div>
+      <div class="lv">-50 a -60</div>
+    </div>
+    <div class="legend-row">
+      <div class="lc" style="background:#ffeb3b"></div>
+      <div class="lt">Buena</div>
+      <div class="lv">-60 a -67</div>
+    </div>
+    <div class="legend-row">
+      <div class="lc" style="background:#ff9800"></div>
+      <div class="lt">Aceptable</div>
+      <div class="lv">-67 a -75</div>
+    </div>
+    <div class="legend-row">
+      <div class="lc" style="background:#f44336"></div>
+      <div class="lc" style="background:#880e4f"></div>
+      <div class="lt">Débil/Sin señal</div>
+      <div class="lv">< -75</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="mo" id="eMo">
+  <div class="mod">
+    <h3>✏️ Editar Access Point</h3>
+    
+    <div class="sett">
+      <label>Nombre</label>
+      <input type="text" id="mN" placeholder="AP01">
+    </div>
+    
+    <div class="sett">
+      <label>Color</label>
+      <input type="color" id="mColor" style="height:40px">
+    </div>
+    
+    <div style="margin:12px 0 8px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase">
+      Radio 1 — 2.4 GHz
+    </div>
+    <div class="fr">
+      <div class="sett">
+        <label>Canal</label>
+        <input type="text" id="mC1" placeholder="CH1">
+      </div>
+      <div class="sett">
+        <label>Clientes</label>
+        <input type="number" id="mV1" placeholder="0" min="0">
+      </div>
+    </div>
+    
+    <div style="margin:12px 0 8px;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase">
+      Radio 2 — 5 GHz
+    </div>
+    <div class="fr">
+      <div class="sett">
+        <label>Canal</label>
+        <input type="text" id="mC2" placeholder="CH48">
+      </div>
+      <div class="sett">
+        <label>Clientes</label>
+        <input type="number" id="mV2" placeholder="0" min="0">
+      </div>
+    </div>
+    
+    <div class="mod-act">
+      <button class="bxc" onclick="clMo()">Cancelar</button>
+      <button class="bxs" onclick="svMo()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="ctx" id="ctx">
+  <div class="ctx-i" onclick="cE()">✏️ Editar</div>
+  <div class="ctx-i" onclick="cD()">📋 Duplicar</div>
+  <div class="ctx-i rd" onclick="cX()">🗑️ Eliminar</div>
+</div>
+
+<div class="section-view" id="sectionView">
+  <div class="hdr">
+    <span>Vista lateral (pseudo-3D)</span>
+    <button class="btn" style="padding:2px 8px;font-size:10px" onclick="toggleSectionView()">✕</button>
+  </div>
+  <canvas id="sectionCvs" width="360" height="176"></canvas>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================================
+// WIFI PLANNER PRO v3.1 — PROFESSIONAL EDITION
+// Con soporte PDF, optimización multi-core, herramientas avanzadas
+// ============================================================================
+
+console.log('%c WiFi Planner Pro v3.1 ', 'background:#3b82f6;color:#fff;font-size:16px;font-weight:bold;padding:8px');
+console.log('Professional Edition - Optimizado para 50+ APs');
+
+// ===== STATE =====
+let aps = [];
+let structs = [];
+let nId = 1;
+let nSt = 1;
+let selId = null;
+let ctxId = null;
+
+// Visual
+let showHeat = true;
+let showWaves = false;
+let band = 5;
+let iconSz = 52;
+let defaultColor = '#2E7D32';
+let waveSpeed = 1.0;
+let waveOpacity = 0.3;
+
+// Propagation
+let pathLossExponent = 3.8;  // Default: Almacén textil Perú
+let maxEffectiveRange = 25;
+
+// 3D Heights (v3.1) - Nuevo sistema de alturas
+let ceilingHeight = 5.5;  // Altura del techo en metros (default: almacén)
+let deviceHeight = 1.0;   // Altura del dispositivo receptor (persona con móvil)
+let apMountHeight = 4.5;  // Altura de montaje AP por defecto
+
+// Dual-band configuration (v3.1)
+let txPower2g = 20;  // Potencia TX 2.4GHz en dBm (Fortinet FAP-431F)
+let txPower5g = 23;  // Potencia TX 5GHz en dBm (Fortinet FAP-431F)
+let antennaGain = 5; // Ganancia de antena en dBi
+let apModel = 'fortinet_431f';  // Modelo de AP seleccionado
+
+// Pan & Zoom
+let zm = 0.5;
+let px = 0;
+let py = 0;
+let isPan = false;
+let panS = {x: 0, y: 0};
+
+// Drawing
+let mode = 'select';
+let drawTool = 'rect';
+let structType = 'rack_metal';
+let drawPoints = [];
+let isDrawing = false;
+
+// Calibration
+let calPts = [];
+let calPxD = 0;
+let pxM = 59.06;
+
+// Project
+let projectPath = null;
+let projectModified = false;
+let projectName = 'Sin título';
+
+// Performance
+let hTimer = null;
+let waveTimer = null;
+let waveStrengthTimer = null;
+let planLoaded = false;
+let renderQuality = 'medium';
+
+// Zones (v3.1) - Sistema de zonas múltiples
+let zones = [];
+let nZone = 1;
+let currentZoneId = null;
+let isDrawingZone = false;
+let zoneDrawPoints = [];
+let showZoneBorders = true;
+let showZoneLabels = true;
+let zoneOpacity = 0.2;
+let showSectionView = false;
+let nextStructHeightOverride = null;
+let nextStructGoesToCeilingOverride = null;
+let uiMode = 'basic';
+let draggingAp = false;
+let heatmapDuringDrag = false;
+let globalCeilingSource = 'project';
+let globalAntennaHeightSource = 'project';
+let activeApDrag = null;
+
+// System
+let systemInfo = {cpu_count: 2, memory_gb: 4};
+
+// ===== PERLIN NOISE (para shadow fading realista) =====
+const _perlinPerm = new Uint8Array(512);
+const _perlinGrad = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+(function initPerlin() {
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 255; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [p[i], p[j]] = [p[j], p[i]];
+  }
+  for (let i = 0; i < 512; i++) _perlinPerm[i] = p[i & 255];
+})();
+
+function perlinNoise(x, y) {
+  const xi = Math.floor(x) & 255, yi = Math.floor(y) & 255;
+  const xf = x - Math.floor(x), yf = y - Math.floor(y);
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+  const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const aa = _perlinPerm[_perlinPerm[xi] + yi];
+  const ab = _perlinPerm[_perlinPerm[xi] + yi + 1];
+  const ba = _perlinPerm[_perlinPerm[xi + 1] + yi];
+  const bb = _perlinPerm[_perlinPerm[xi + 1] + yi + 1];
+  const dot = (h, fx, fy) => { const g = _perlinGrad[h & 7]; return g[0] * fx + g[1] * fy; };
+  const x1 = dot(aa, xf, yf) + u * (dot(ba, xf - 1, yf) - dot(aa, xf, yf));
+  const x2 = dot(ab, xf, yf - 1) + u * (dot(bb, xf - 1, yf - 1) - dot(ab, xf, yf - 1));
+  return x1 + v * (x2 - x1); // Rango: ~[-1, 1]
+}
+
+// ===== FSPL REAL POR FRECUENCIA =====
+// Free Space Path Loss a distancia d0=1m para frecuencia dada
+// FSPL(d0=1m, f) = 20*log10(f_MHz) + 20*log10(d0_km) + 32.44
+// Con d0=1m=0.001km: = 20*log10(f_MHz) + 20*log10(0.001) + 32.44
+//                     = 20*log10(f_MHz) - 60 + 32.44
+//                     = 20*log10(f_MHz) - 27.56
+function fsplAtRef(freqMHz) {
+  return 20 * Math.log10(freqMHz) - 27.56;
+}
+// 2412 MHz → 40.09 dB, 5500 MHz → 47.25 dB (diferencia real: ~7.2 dB)
+
+// ===== ZONE GRID CACHE =====
+let _zoneGridCache = null;
+let _zoneGridStep = 0;
+let _zoneGridW = 0;
+let _zoneGridH = 0;
+let _zoneGridVersion = 0;
+let _currentZoneVersion = 0;
+
+function buildZoneGrid(w, h, step) {
+  _currentZoneVersion++;
+  const cols = Math.ceil(w / step);
+  const rows = Math.ceil(h / step);
+  const grid = new Array(rows);
+  for (let r = 0; r < rows; r++) {
+    grid[r] = new Array(cols);
+    const cy = r * step + (step >> 1);
+    for (let c = 0; c < cols; c++) {
+      const cx = c * step + (step >> 1);
+      grid[r][c] = getZoneAtPoint(cx, cy);
+    }
+  }
+  _zoneGridCache = grid;
+  _zoneGridStep = step;
+  _zoneGridW = w;
+  _zoneGridH = h;
+  _zoneGridVersion = _currentZoneVersion;
+}
+
+function getZoneCached(x, y) {
+  if (!_zoneGridCache) return getZoneAtPoint(x, y);
+  const c = Math.min(Math.floor(x / _zoneGridStep), Math.ceil(_zoneGridW / _zoneGridStep) - 1);
+  const r = Math.min(Math.floor(y / _zoneGridStep), Math.ceil(_zoneGridH / _zoneGridStep) - 1);
+  if (r < 0 || c < 0) return null;
+  return _zoneGridCache[r]?.[c] ?? null;
+}
+
+// ===== WEB WORKER PARA HEATMAP (v3.2) =====
+const _heatmapWorkerCode = `
+// --- Funciones autocontenidas para el Worker ---
+
+// Perlin Noise
+const _wPerm = new Uint8Array(512);
+const _wGrad = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+function initPerlinWorker(seed) {
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+  // Seeded shuffle (simple LCG)
+  let s = seed || 42;
+  for (let i = 255; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xFFFFFFFF;
+    const j = (s >>> 0) % (i + 1);
+    [p[i], p[j]] = [p[j], p[i]];
+  }
+  for (let i = 0; i < 512; i++) _wPerm[i] = p[i & 255];
+}
+
+function perlinNoise(x, y) {
+  const xi = Math.floor(x) & 255, yi = Math.floor(y) & 255;
+  const xf = x - Math.floor(x), yf = y - Math.floor(y);
+  const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);
+  const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);
+  const aa = _wPerm[_wPerm[xi] + yi];
+  const ab = _wPerm[_wPerm[xi] + yi + 1];
+  const ba = _wPerm[_wPerm[xi + 1] + yi];
+  const bb = _wPerm[_wPerm[xi + 1] + yi + 1];
+  const dot = (h, fx, fy) => { const g = _wGrad[h & 7]; return g[0] * fx + g[1] * fy; };
+  const x1 = dot(aa, xf, yf) + u * (dot(ba, xf - 1, yf) - dot(aa, xf, yf));
+  const x2 = dot(ab, xf, yf - 1) + u * (dot(bb, xf - 1, yf - 1) - dot(ab, xf, yf - 1));
+  return x1 + v * (x2 - x1);
+}
+
+function fsplAtRef(freqMHz) {
+  return 20 * Math.log10(freqMHz) - 27.56;
+}
+
+function lineIntersectionT(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  if (Math.abs(denom) < 0.001) return null;
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+  if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) return ua;
+  return null;
+}
+
+function lineIntersectsSegment(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  if (Math.abs(denom) < 0.001) return false;
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+  return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+}
+
+function isPointInPolygon(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y;
+    const xj = polygon[j].x, yj = polygon[j].y;
+    const intersect = ((yi > point.y) !== (yj > point.y))
+        && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// RSSI color interpolation
+const _rssiStops = [
+  { rssi: -40, color: [0, 200, 83, 240] },
+  { rssi: -50, color: [0, 200, 83, 235] },
+  { rssi: -60, color: [118, 255, 3, 220] },
+  { rssi: -67, color: [255, 235, 59, 205] },
+  { rssi: -75, color: [255, 152, 0, 188] },
+  { rssi: -85, color: [244, 67, 54, 165] },
+  { rssi: -90, color: [136, 14, 79, 118] },
+  { rssi: -100, color: [80, 0, 40, 55] }
+];
+
+function rssiToColor(rssi) {
+  if (rssi >= _rssiStops[0].rssi) return _rssiStops[0].color;
+  if (rssi <= _rssiStops[_rssiStops.length - 1].rssi) return _rssiStops[_rssiStops.length - 1].color;
+  for (let i = 0; i < _rssiStops.length - 1; i++) {
+    const upper = _rssiStops[i], lower = _rssiStops[i + 1];
+    if (rssi <= upper.rssi && rssi > lower.rssi) {
+      const t = (rssi - lower.rssi) / (upper.rssi - lower.rssi);
+      return [
+        Math.round(lower.color[0] + (upper.color[0] - lower.color[0]) * t),
+        Math.round(lower.color[1] + (upper.color[1] - lower.color[1]) * t),
+        Math.round(lower.color[2] + (upper.color[2] - lower.color[2]) * t),
+        Math.round(lower.color[3] + (upper.color[3] - lower.color[3]) * t)
+      ];
+    }
+  }
+  return _rssiStops[_rssiStops.length - 1].color;
+}
+
+// --- Worker message handler ---
+self.onmessage = function(e) {
+  const d = e.data;
+  initPerlinWorker(d.perlinSeed);
+
+  const { w, h, yStart, yEnd, step, aps, structs, zones, pxM, band,
+          txPower2g, txPower5g, deviceHeight, pathLossExponent,
+          maxEffectiveRange, ceilingHeight, rx, gain } = d;
+
+  const freqMHz = band === 5 ? 5500 : 2412;
+  const PL_d0_real = fsplAtRef(freqMHz);
+  const perlinScale = 0.015;
+  const shadowSigma = 3.0;
+  const lambda = 0.3 / (freqMHz / 1000);
+
+  // Build zone grid for this chunk
+  let zoneGrid = null;
+  if (zones.length > 0) {
+    const cols = Math.ceil(w / step);
+    const rows = Math.ceil((yEnd - yStart) / step);
+    zoneGrid = new Array(rows);
+    for (let r = 0; r < rows; r++) {
+      zoneGrid[r] = new Array(cols);
+      const cy = yStart + r * step + (step >> 1);
+      for (let c = 0; c < cols; c++) {
+        const cx = c * step + (step >> 1);
+        // Find zone at point
+        let found = null;
+        for (let zi = zones.length - 1; zi >= 0; zi--) {
+          const z = zones[zi];
+          if (z.visible && isPointInPolygon({x: cx, y: cy}, z.polygon)) {
+            found = z; break;
+          }
+        }
+        zoneGrid[r][c] = found;
+      }
+    }
+  }
+
+  function getZone(x, y) {
+    if (!zoneGrid) return null;
+    const c = Math.min(Math.floor(x / step), Math.ceil(w / step) - 1);
+    const r = Math.min(Math.floor((y - yStart) / step), Math.ceil((yEnd - yStart) / step) - 1);
+    if (r < 0 || c < 0) return null;
+    return zoneGrid[r]?.[c] ?? null;
+  }
+
+  // Output buffer: only for our row range
+  const pixelData = new Uint8ClampedArray(w * (yEnd - yStart) * 4);
+  const zoneStats = {};
+  // Global coverage metrics
+  let globalTotal = 0, globalGood = 0, globalWeak = 0, globalNone = 0;
+
+  for (let y = yStart; y < yEnd; y += step) {
+    for (let x = 0; x < w; x += step) {
+      let maxRSSI = -120;
+      const zoneAtPoint = zones.length > 0 ? getZone(x, y) : null;
+      const localPLE = zoneAtPoint?.pathLossExponent ?? pathLossExponent;
+      const localCeil = zoneAtPoint?.ceilingHeight ?? ceilingHeight;
+
+      for (let ai = 0; ai < aps.length; ai++) {
+        const ap = aps[ai];
+        const tx = band === 24 ? (ap.txPower2g !== undefined ? ap.txPower2g : txPower2g) :
+                                  (ap.txPower5g !== undefined ? ap.txPower5g : txPower5g);
+        const apGain = ap.antennaGain !== undefined ? ap.antennaGain : gain;
+
+        const dx = x - ap.x;
+        const dy2 = y - ap.y;
+        const distPx = Math.hypot(dx, dy2);
+        const distM = distPx / pxM;
+
+        if (distM < 0.5) {
+          maxRSSI = Math.max(maxRSSI, tx + apGain - PL_d0_real);
+          continue;
+        }
+
+        const bandRangeFactor = band === 5 ? 0.65 : 1.0;
+        const effectiveRange = maxEffectiveRange * bandRangeFactor;
+
+        if (distM > effectiveRange * 1.3) continue;
+
+        let totalWallLoss = 0;
+        let wallsTraversed = 0;
+        let minEdgeClearanceM = Infinity;
+        const apHeightM = ap.height || (localCeil * 0.85);
+        const pointHeightM = deviceHeight;
+
+        for (let si = 0; si < structs.length; si++) {
+          const st = structs[si];
+          const attenuation = Math.abs(st.db);
+
+          if (st.tool === 'rect' && st.w > 0 && st.h > 0) {
+            const rx2 = st.x + st.w, ry2 = st.y + st.h;
+            const sideTs = [];
+            let t;
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, rx2, st.y); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, rx2, st.y, rx2, ry2); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, ry2, rx2, ry2); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, st.x, ry2); if (t !== null) sideTs.push(t);
+
+            if (sideTs.length > 0) {
+              sideTs.sort((a, b) => a - b);
+              const traversals = Math.ceil(sideTs.length / 2);
+              if (st.goesToCeiling) {
+                totalWallLoss += attenuation * traversals;
+                wallsTraversed += traversals;
+              } else {
+                const structH = st.height || localCeil;
+                for (let ti = 0; ti < sideTs.length; ti += 2) {
+                  const lh = apHeightM + (pointHeightM - apHeightM) * sideTs[ti];
+                  if (lh > structH) {
+                    minEdgeClearanceM = Math.min(minEdgeClearanceM, lh - structH);
+                    totalWallLoss += attenuation * 0.15;
+                    wallsTraversed += 0.15;
+                  } else {
+                    totalWallLoss += attenuation;
+                    wallsTraversed += 1;
+                  }
+                }
+              }
+            } else {
+              const cx2 = st.x + st.w / 2, cy2 = st.y + st.h / 2;
+              const halfW = st.w / 2, halfH = st.h / 2;
+              const rayLen = distPx;
+              if (rayLen > 0) {
+                const ndx = dx / rayLen, ndy = dy2 / rayLen;
+                const tProj = Math.max(0, Math.min(rayLen, (cx2 - ap.x) * ndx + (cy2 - ap.y) * ndy));
+                const projX = ap.x + ndx * tProj, projY = ap.y + ndy * tProj;
+                const edgeDistPx = Math.hypot(Math.max(0, Math.abs(projX - cx2) - halfW), Math.max(0, Math.abs(projY - cy2) - halfH));
+                const edgeDistM = edgeDistPx / pxM;
+                if (edgeDistM < 2.0) minEdgeClearanceM = Math.min(minEdgeClearanceM, edgeDistM);
+              }
+            }
+          } else if (lineIntersectsSegment(ap.x, ap.y, x, y, st.x, st.y, st.x + (st.w||0), st.y + (st.h||0))) {
+            const tCross = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, st.x + (st.w||0), st.y + (st.h||0));
+            if (st.goesToCeiling) {
+              totalWallLoss += attenuation;
+              wallsTraversed++;
+            } else {
+              const structH = st.height || localCeil;
+              const lh = tCross === null ? (apHeightM + pointHeightM) / 2 : apHeightM + (pointHeightM - apHeightM) * tCross;
+              if (lh > structH) {
+                minEdgeClearanceM = Math.min(minEdgeClearanceM, lh - structH);
+                totalWallLoss += attenuation * 0.15;
+                wallsTraversed += 0.15;
+              } else {
+                totalWallLoss += attenuation;
+                wallsTraversed++;
+              }
+            }
+          }
+        }
+
+        const effectiveN = localPLE + (wallsTraversed * 0.3);
+        const pathLoss = distM <= 1.0 ? PL_d0_real : PL_d0_real + 10 * effectiveN * Math.log10(distM);
+        const shadowFading = perlinNoise(x * perlinScale + ai * 100, y * perlinScale) * shadowSigma;
+        // Rayleigh multipath fading: ±3 dB variation at high spatial frequency
+        const multipath = wallsTraversed > 0 ? perlinNoise(x * 0.08 + ai * 50, y * 0.08) * 3.0 : 0;
+        let rssi = tx + apGain - pathLoss - totalWallLoss + shadowFading + multipath;
+
+        if (minEdgeClearanceM < 2.0 && minEdgeClearanceM !== Infinity) {
+          const fresnelV = minEdgeClearanceM * Math.sqrt(2 / (lambda * Math.max(distM, 1)));
+          let dLoss;
+          if (fresnelV < -0.7) dLoss = 0;
+          else if (fresnelV < 0) dLoss = 6.0 - 9.0 * fresnelV;
+          else dLoss = 6.0 + 9.0 * fresnelV;
+          rssi -= Math.min(dLoss, 12);
+        }
+
+        rssi = Math.min(rssi, tx + apGain);
+        if (rssi < rx) rssi = -120;
+        if (rssi > maxRSSI) maxRSSI = rssi;
+      }
+
+      const color = rssiToColor(maxRSSI);
+
+      // Global coverage metrics
+      globalTotal++;
+      if (maxRSSI >= -67) globalGood++;
+      else if (maxRSSI >= -85) globalWeak++;
+      else globalNone++;
+
+      if (zoneAtPoint) {
+        const key = String(zoneAtPoint.id);
+        if (!zoneStats[key]) zoneStats[key] = {name: zoneAtPoint.name, total: 0, good: 0, weak: 0, none: 0};
+        zoneStats[key].total++;
+        if (maxRSSI >= -67) zoneStats[key].good++;
+        else if (maxRSSI >= -85) zoneStats[key].weak++;
+        else zoneStats[key].none++;
+      }
+
+      for (let by = 0; by < step && y + by < yEnd; by++) {
+        for (let bx = 0; bx < step && x + bx < w; bx++) {
+          const idx = ((y - yStart + by) * w + (x + bx)) * 4;
+          pixelData[idx] = color[0];
+          pixelData[idx + 1] = color[1];
+          pixelData[idx + 2] = color[2];
+          pixelData[idx + 3] = color[3];
+        }
+      }
+    }
+  }
+
+  self.postMessage({ pixelData, yStart, yEnd, zoneStats, globalStats: { total: globalTotal, good: globalGood, weak: globalWeak, none: globalNone } }, [pixelData.buffer]);
+};
+`;
+
+let _heatmapWorkerURL = null;
+let _heatmapWorkers = [];
+const _numWorkers = Math.min(navigator.hardwareConcurrency || 4, 8);
+
+function getHeatmapWorkerURL() {
+  if (!_heatmapWorkerURL) {
+    const blob = new Blob([_heatmapWorkerCode], { type: 'application/javascript' });
+    _heatmapWorkerURL = URL.createObjectURL(blob);
+  }
+  return _heatmapWorkerURL;
+}
+
+function terminateHeatmapWorkers() {
+  _heatmapWorkers.forEach(w => w.terminate());
+  _heatmapWorkers = [];
+}
+
+// Constants
+const WSVG = `<svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>`;
+
+const STC = {
+  wall: '#8B4513',
+  brick: '#CD853F',
+  drywall: '#9E9E9E',
+  glass: '#0288D1',
+  wood: '#DEB887',
+  rack: '#8B4513',
+  rack_full: '#A0522D',
+  rack_metal: '#37474F',
+  metal: '#37474F',
+  elevator: '#111'
+};
+
+const STL = {
+  wall: 'Concreto',
+  brick: 'Ladrillo',
+  drywall: 'Drywall',
+  glass: 'Vidrio',
+  wood: 'Madera',
+  rack: 'Anaquel simple',
+  rack_full: 'Anaquel (ropa)',
+  rack_metal: 'Anaquel metálico',
+  metal: 'Metal/Puerta',
+  elevator: 'Columna/Ascensor'
+};
+
+const STD = {
+  wall: -8,       // Concreto (antes -15, algoritmo: 8 dB)
+  brick: -10,     // Ladrillo (antes -8, algoritmo: 10 dB)
+  drywall: -3,    // Drywall (antes -4, algoritmo: 3 dB)
+  glass: -3,      // Vidrio
+  wood: -4,       // Madera (nuevo, algoritmo: 4 dB)
+  rack: -6,       // Anaquel vacío
+  rack_full: -10, // Anaquel lleno
+  rack_metal: -12,// Anaquel metálico/sólido
+  metal: -20,     // Metal (algoritmo: 20 dB)
+  elevator: -25   // Ascensor/columna
+};
+
+// v3.1: Altura típica de estructuras (metros)
+const STH = {
+  wall: { default: null, goesToCeiling: true, label: 'Hasta techo' },  // null = llega al techo
+  brick: { default: null, goesToCeiling: true, label: 'Hasta techo' },
+  drywall: { default: null, goesToCeiling: true, label: 'Hasta techo' },
+  glass: { default: null, goesToCeiling: true, label: 'Hasta techo' },
+  wood: { default: null, goesToCeiling: true, label: 'Hasta techo' },   // Madera
+  rack: { default: 2.5, goesToCeiling: false, label: '2.5m típico' },  // Anaquel simple
+  rack_full: { default: 3.5, goesToCeiling: false, label: '3.5m típico' },  // Anaquel ropa
+  rack_metal: { default: 4.0, goesToCeiling: false, label: '4.0m típico' },  // Anaquel metálico industrial
+  metal: { default: 2.2, goesToCeiling: false, label: '2.2m típico' },  // Puerta metálica
+  elevator: { default: null, goesToCeiling: true, label: 'Hasta techo' }  // Columna
+};
+
+// DOM
+const cvs = document.getElementById('cvs');
+const wrap = document.getElementById('wrap');
+const pImg = document.getElementById('pImg');
+const hCvs = document.getElementById('heatCvs');
+const wCvs = document.getElementById('wavesCvs');
+const sCvs = document.getElementById('structCvs');
+const zCvs = document.getElementById('zonesCvs');
+const sectionCvs = document.getElementById('sectionCvs');
+const hCtx = hCvs.getContext('2d', {alpha: true, desynchronized: true});
+const wCtx = wCvs.getContext('2d', {alpha: true, desynchronized: true});
+const sCtx = sCvs.getContext('2d', {alpha: true});
+const zCtx = zCvs.getContext('2d', {alpha: true});
+const sectionCtx = sectionCvs.getContext('2d', {alpha: true});
+
+// Plan loaded
+pImg.onload = () => {
+  const w = pImg.naturalWidth;
+  const h = pImg.naturalHeight;
+  
+  hCvs.width = wCvs.width = sCvs.width = zCvs.width = w;
+  hCvs.height = wCvs.height = sCvs.height = zCvs.height = h;
+  
+  pImg.style.display = 'block';
+  document.getElementById('welcome').style.display = 'none';
+  planLoaded = true;
+  zCvs.style.pointerEvents = 'auto';
+  
+  fit();
+  drawAllZones();
+  reH();
+  
+  toast('✅ Plano cargado correctamente');
+};
+
+// ===== INITIALIZATION =====
+async function init() {
+  console.log('🚀 Inicializando WiFi Planner Pro v3.1...');
+  
+  // Detectar sistema
+  if (window.pywebview) {
+    try {
+      systemInfo = await window.pywebview.api.get_system_info();
+      console.log(`🖥️  Sistema detectado: ${systemInfo.cpu_count} cores, ${systemInfo.memory_gb?.toFixed(1)}GB RAM`);
+      
+      // Ajustar calidad según recursos
+      if (systemInfo.cpu_count <= 2) {
+        renderQuality = 'low';
+        document.getElementById('quality').value = 'low';
+        document.getElementById('hrR').value = '8';
+        document.getElementById('hrv').textContent = '8';
+        console.log('⚡ Modo de bajo rendimiento activado (CPU <= 2 cores)');
+      } else if (systemInfo.cpu_count >= 6) {
+        renderQuality = 'high';
+        document.getElementById('quality').value = 'high';
+        document.getElementById('hrR').value = '4';
+        document.getElementById('hrv').textContent = '4';
+        console.log('🚀 Modo de alto rendimiento activado (CPU >= 6 cores)');
+      }
+    } catch(e) {
+      console.warn('No se pudo detectar info del sistema');
+    }
+  }
+  
+  upT();
+  applyScale();
+  document.getElementById('apMountH').max = String(ceilingHeight);
+  document.getElementById('apMountH').value = apMountHeight;
+  document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+  setUIMode('basic');
+  
+  console.log('✅ Inicialización completa');
+  toast('WiFi Planner Pro v3.1 listo');
+}
+
+// ===== PROJECT MANAGEMENT =====
+function markModified() {
+  if (!projectModified) {
+    projectModified = true;
+    updateProjectStatus();
+    
+    if (window.pywebview) {
+      window.pywebview.api.mark_project_modified();
+    }
+  }
+}
+
+function updateProjectStatus() {
+  const status = document.getElementById('projStatus');
+  const nameEl = document.getElementById('projName');
+  
+  if (projectModified) {
+    status.classList.add('modified');
+    nameEl.textContent = projectName + ' *';
+  } else {
+    status.classList.remove('modified');
+    nameEl.textContent = projectName;
+  }
+}
+
+async function newProject() {
+  if (projectModified) {
+    if (!confirm('¿Descartar cambios no guardados?')) {
+      return;
+    }
+  }
+  
+  // Limpiar todo
+  aps.forEach(a => {
+    const el = document.getElementById('ap-' + a.id);
+    if (el) {
+      el._cl?.();
+      el.remove();
+    }
+  });
+  
+  aps = [];
+  structs = [];
+  zones = [];
+  nId = 1;
+  nSt = 1;
+  nZone = 1;
+  selId = null;
+  currentZoneId = null;
+  
+  // Reset canvas
+  hCtx.clearRect(0, 0, hCvs.width, hCvs.height);
+  sCtx.clearRect(0, 0, sCvs.width, sCvs.height);
+  wCtx.clearRect(0, 0, wCvs.width, wCvs.height);
+  zCtx.clearRect(0, 0, zCvs.width, zCvs.height);
+  
+  pImg.style.display = 'none';
+  document.getElementById('welcome').style.display = 'block';
+  planLoaded = false;
+  
+  // Reset project info
+  projectPath = null;
+  projectModified = false;
+  projectName = 'Sin título';
+  ceilingHeight = 5.5;
+  deviceHeight = 1.0;
+  apMountHeight = 4.5;
+  globalCeilingSource = 'project';
+  globalAntennaHeightSource = 'project';
+  
+  updateProjectStatus();
+  updL();
+  updSL();
+  updateZonesList();
+  document.getElementById('zoneConfigPanel').style.display = 'none';
+  document.getElementById('zoneConfigEmpty').style.display = 'block';
+  document.getElementById('ceilingH').value = ceilingHeight;
+  document.getElementById('ceilingv').textContent = ceilingHeight.toFixed(1);
+  document.getElementById('deviceH').value = deviceHeight;
+  document.getElementById('devicev').textContent = deviceHeight.toFixed(1);
+  document.getElementById('apMountH').max = String(ceilingHeight);
+  document.getElementById('apMountH').value = apMountHeight;
+  document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+  updateZoneStats();
+  
+  toast('🗎 Nuevo proyecto creado');
+}
+
+async function saveProject() {
+  const data = buildProjectData();
+  const jsonStr = JSON.stringify(data, null, 2);
+  
+  if (!window.pywebview) {
+    // Browser fallback
+    const blob = new Blob([jsonStr], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = projectName + '.wfp';
+    a.click();
+    
+    projectModified = false;
+    updateProjectStatus();
+    toast('💾 Proyecto descargado');
+    return;
+  }
+  
+  try {
+    const result = await window.pywebview.api.save_project(jsonStr, false);
+    
+    if (result.cancelled) return;
+    
+    if (result.success) {
+      projectPath = result.path;
+      projectName = result.filename.replace(/\.(wfp|json)$/, '');
+      projectModified = false;
+      updateProjectStatus();
+      toast(`💾 ${result.filename} guardado`);
+    } else if (result.error) {
+      toast(`❌ Error: ${result.error}`);
+    }
+  } catch(e) {
+    toast(`❌ Error al guardar: ${e}`);
+  }
+}
+
+async function saveProjectAs() {
+  const data = buildProjectData();
+  const jsonStr = JSON.stringify(data, null, 2);
+  
+  if (!window.pywebview) {
+    // Browser fallback
+    const blob = new Blob([jsonStr], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'proyecto_wifi.wfp';
+    a.click();
+    toast('💾 Proyecto descargado');
+    return;
+  }
+  
+  try {
+    const result = await window.pywebview.api.save_project_as(jsonStr);
+    
+    if (result.cancelled) return;
+    
+    if (result.success) {
+      projectPath = result.path;
+      projectName = result.filename.replace(/\.(wfp|json)$/, '');
+      projectModified = false;
+      updateProjectStatus();
+      toast(`💾 ${result.filename} guardado`);
+    } else if (result.error) {
+      toast(`❌ Error: ${result.error}`);
+    }
+  } catch(e) {
+    toast(`❌ Error al guardar: ${e}`);
+  }
+}
+
+async function loadProject() {
+  if (projectModified) {
+    if (!confirm('¿Descartar cambios no guardados?')) {
+      return;
+    }
+  }
+  
+  if (!window.pywebview) {
+    // Browser fallback
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.wfp,.json';
+    inp.onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      
+      const r = new FileReader();
+      r.onload = (ev) => {
+        parseProject(ev.target.result, f.name);
+      };
+      r.readAsText(f);
+    };
+    inp.click();
+    return;
+  }
+  
+  try {
+    const result = await window.pywebview.api.load_project();
+    
+    if (!result) return;
+    
+    if (result.error) {
+      toast(`❌ Error: ${result.error}`);
+      return;
+    }
+    
+    parseProject(result.data, result.filename);
+    
+    projectPath = result.path;
+    projectName = result.filename.replace(/\.(wfp|json)$/, '');
+    projectModified = false;
+    updateProjectStatus();
+    
+  } catch(e) {
+    toast(`❌ Error al cargar: ${e}`);
+  }
+}
+
+function buildProjectData() {
+  return {
+    version: '3.1',  // v3.1: Soporte para altura 3D y dual-band
+    aps: aps.map(a => ({
+      name: a.name,
+      color: a.color,
+      x: Math.round(a.x),
+      y: Math.round(a.y),
+      r1Ch: a.r1Ch,
+      r1Val: a.r1Val,
+      r2Ch: a.r2Ch,
+      r2Val: a.r2Val,
+      // v3.1: Nuevos campos
+      height: a.height !== undefined ? a.height : (ceilingHeight * 0.85),
+      txPower2g: a.txPower2g !== undefined ? a.txPower2g : txPower2g,
+      txPower5g: a.txPower5g !== undefined ? a.txPower5g : txPower5g,
+      antennaGain: a.antennaGain !== undefined ? a.antennaGain : antennaGain
+    })),
+    structs: structs.map(s => ({
+      type: s.type,
+      tool: s.tool || 'line',
+      points: s.points ? s.points.map(p => ({x: Math.round(p.x), y: Math.round(p.y)})) : null,
+      x: s.x ? Math.round(s.x) : null,
+      y: s.y ? Math.round(s.y) : null,
+      w: s.w ? Math.round(s.w) : null,
+      h: s.h ? Math.round(s.h) : null,
+      db: s.db,
+      // v3.1: Nuevos campos
+      height: s.height,
+      goesToCeiling: s.goesToCeiling
+    })),
+    zones: zones.map(z => ({
+      id: z.id,
+      name: z.name,
+      polygon: z.polygon ? z.polygon.map(p => ({x: Math.round(p.x), y: Math.round(p.y)})) : [],
+      type: z.type,
+      ceilingHeight: z.ceilingHeight,
+      pathLossExponent: z.pathLossExponent,
+      color: z.color,
+      visible: z.visible !== false
+    })),
+    config: {
+      iconSz,
+      pxM,
+      band,
+      defaultColor,
+      waveSpeed,
+      waveOpacity,
+      showWaves,
+      pathLossExponent,
+      maxEffectiveRange,
+      envType: document.getElementById('envType').value,
+      tx24: document.getElementById('tx24').value,
+      tx5: document.getElementById('tx5').value,
+      ag: document.getElementById('ag').value,
+      rs: document.getElementById('rs').value,
+      quality: renderQuality,
+      // v3.1: Nuevos campos
+      ceilingHeight,
+      deviceHeight,
+      apMountHeight,
+      apModel,
+      showZoneBorders,
+      showZoneLabels,
+      zoneOpacity
+    }
+  };
+}
+
+function parseProject(jsonStr, filename) {
+  try {
+    const d = JSON.parse(jsonStr);
+    
+    // Limpiar existente
+    aps.forEach(a => {
+      const el = document.getElementById('ap-' + a.id);
+      if (el) {
+        el._cl?.();
+        el.remove();
+      }
+    });
+    
+    aps = [];
+    structs = [];
+    zones = [];
+    currentZoneId = null;
+    
+    // Cargar config
+    if (d.config) {
+      iconSz = d.config.iconSz || 52;
+      pxM = d.config.pxM || 59.06;
+      band = d.config.band || 5;
+      defaultColor = d.config.defaultColor || '#2E7D32';
+      waveSpeed = d.config.waveSpeed || 1.0;
+      waveOpacity = d.config.waveOpacity || 0.3;
+      renderQuality = d.config.quality || 'medium';
+      pathLossExponent = d.config.pathLossExponent || 3.8;
+      maxEffectiveRange = d.config.maxEffectiveRange || 25;
+      
+      // v3.1: Cargar campos de altura 3D
+      ceilingHeight = d.config.ceilingHeight !== undefined ? d.config.ceilingHeight : 5.5;
+      deviceHeight = d.config.deviceHeight !== undefined ? d.config.deviceHeight : 1.0;
+      apMountHeight = d.config.apMountHeight !== undefined ? d.config.apMountHeight : (ceilingHeight * 0.85);
+      if (apMountHeight > ceilingHeight) apMountHeight = ceilingHeight;
+      globalCeilingSource = 'project';
+      globalAntennaHeightSource = 'project';
+      apModel = d.config.apModel || 'fortinet_431f';
+      txPower2g = parseFloat(d.config.tx24) || 20;
+      txPower5g = parseFloat(d.config.tx5) || 23;
+      antennaGain = parseFloat(d.config.ag) || 5;
+      
+      setBand(band);
+      
+      // Restaurar controles
+      if (d.config.tx24) document.getElementById('tx24').value = d.config.tx24;
+      if (d.config.tx5) document.getElementById('tx5').value = d.config.tx5;
+      if (d.config.ag) document.getElementById('ag').value = d.config.ag;
+      if (d.config.rs) document.getElementById('rs').value = d.config.rs;
+      
+      // v3.1: Restaurar controles de altura
+      document.getElementById('ceilingH').value = ceilingHeight;
+      document.getElementById('ceilingv').textContent = ceilingHeight;
+      document.getElementById('deviceH').value = deviceHeight;
+      document.getElementById('devicev').textContent = deviceHeight;
+      document.getElementById('apMountH').max = String(ceilingHeight);
+      document.getElementById('apMountH').value = apMountHeight;
+      document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+      updateZoneStats();
+      
+      document.getElementById('isz').value = iconSz;
+      document.getElementById('isv').textContent = iconSz;
+      
+      document.getElementById('wSpeed').value = waveSpeed;
+      document.getElementById('wsv').textContent = waveSpeed;
+      
+      document.getElementById('wOpac').value = waveOpacity * 100;
+      document.getElementById('wov').textContent = waveOpacity.toFixed(2);
+      
+      document.getElementById('quality').value = renderQuality;
+      
+      document.getElementById('ple').value = pathLossExponent;
+      document.getElementById('plev').textContent = pathLossExponent;
+      
+      document.getElementById('maxR').value = maxEffectiveRange;
+      document.getElementById('maxRv').textContent = maxEffectiveRange;
+      
+      if (d.config.envType) {
+        document.getElementById('envType').value = d.config.envType;
+      }
+      
+      if (d.config.showWaves) {
+        showWaves = true;
+        document.getElementById('bW').classList.add('on');
+        wCvs.style.display = 'block';
+        startWaves();
+      }
+
+      if (d.config.showZoneBorders !== undefined) {
+        showZoneBorders = !!d.config.showZoneBorders;
+        document.getElementById('showZoneBorders').checked = showZoneBorders;
+      }
+      if (d.config.showZoneLabels !== undefined) {
+        showZoneLabels = !!d.config.showZoneLabels;
+        document.getElementById('showZoneLabels').checked = showZoneLabels;
+      }
+      if (d.config.zoneOpacity !== undefined) {
+        zoneOpacity = d.config.zoneOpacity;
+        document.getElementById('zoneOpac').value = Math.round(zoneOpacity * 100);
+        document.getElementById('zoneOpacv').textContent = zoneOpacity.toFixed(2);
+      }
+    }
+    
+    // Cargar estructuras
+    if (d.structs) {
+      d.structs.forEach(s => {
+        structs.push({
+          id: nSt++,
+          ...s
+        });
+      });
+      drawAllST();
+      updSL();
+    }
+    
+    // Cargar APs
+    if (d.aps) {
+      d.aps.forEach(a => {
+        addAP(a.x, a.y, a.color, a);
+      });
+    }
+
+    // Cargar zonas
+    if (d.zones && Array.isArray(d.zones)) {
+      zones = d.zones.map(z => ({
+        id: z.id,
+        name: z.name || `Zona ${z.id}`,
+        polygon: Array.isArray(z.polygon) ? z.polygon : [],
+        type: z.type || 'almacen_textil_peru',
+        ceilingHeight: z.ceilingHeight !== undefined ? z.ceilingHeight : 5.5,
+        pathLossExponent: z.pathLossExponent !== undefined ? z.pathLossExponent : 3.8,
+        color: z.color || '#3b82f6',
+        visible: z.visible !== false
+      })).filter(z => z.polygon.length >= 3);
+
+      const maxZoneId = zones.reduce((m, z) => Math.max(m, Number(z.id) || 0), 0);
+      nZone = Math.max(1, maxZoneId + 1);
+      updateZonesList();
+      drawAllZones();
+    } else {
+      zones = [];
+      nZone = 1;
+      updateZonesList();
+      drawAllZones();
+    }
+    
+    toast(`📂 ${filename} - ${d.aps?.length || 0} APs, ${d.structs?.length || 0} estructuras, ${zones.length} zonas`);
+    
+  } catch(e) {
+    console.error('Parse error:', e);
+    toast('❌ Error al cargar proyecto');
+  }
+}
+
+// ===== PLAN LOADING =====
+async function loadPlan() {
+  if (!window.pywebview) {
+    // Browser fallback
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'image/*';
+    inp.onchange = (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      
+      const r = new FileReader();
+      r.onload = (ev) => {
+        pImg.src = ev.target.result;
+      };
+      r.readAsDataURL(f);
+    };
+    inp.click();
+    return;
+  }
+  
+  try {
+    const result = await window.pywebview.api.open_plan_file();
+    
+    if (!result) return;
+    
+    if (result.error) {
+      toast(`❌ ${result.error}`);
+      return;
+    }
+    
+    pImg.src = result.data;
+    toast(`✅ ${result.name} cargado (${result.size?.toFixed(0)}KB)`);
+    
+  } catch(e) {
+    toast(`❌ Error: ${e}`);
+  }
+}
+
+// ===== PAN & ZOOM =====
+function upT() {
+  wrap.style.transform = `translate(${px}px, ${py}px) scale(${zm})`;
+  document.getElementById('zmT').textContent = Math.round(zm * 100) + '%';
+  updateScaleRuler();
+}
+
+// v3.2: Regla visual de escala en metros
+function updateScaleRuler() {
+  const ruler = document.getElementById('scaleRuler');
+  if (!ruler || !planLoaded || pxM <= 0) { if (ruler) ruler.style.display = 'none'; return; }
+
+  ruler.style.display = 'flex';
+  const rulerM = getRulerMeters();
+  const rulerScreenPx = rulerM * pxM * zm;
+
+  document.getElementById('rulerBar').style.width = rulerScreenPx + 'px';
+  document.getElementById('rulerLbl').textContent = rulerM + 'm';
+}
+
+function zI() { sZ(zm * 1.25); }
+function zO() { sZ(zm / 1.25); }
+
+function sZ(n, cx, cy) {
+  n = Math.max(0.05, Math.min(10, n));
+  
+  if (cx !== undefined) {
+    px = cx - (cx - px) * (n / zm);
+    py = cy - (cy - py) * (n / zm);
+  }
+  
+  zm = n;
+  upT();
+}
+
+function fit() {
+  if (!planLoaded) return;
+
+  const r = cvs.getBoundingClientRect();
+  const padding = 40;
+
+  zm = Math.min(
+    (r.width - padding) / pImg.naturalWidth,
+    (r.height - padding) / pImg.naturalHeight
+  );
+
+  px = (r.width - pImg.naturalWidth * zm) / 2;
+  py = (r.height - pImg.naturalHeight * zm) / 2;
+
+  // Auto-scale icons so they always appear ~52px on screen regardless of zoom
+  const targetScreenPx = 52;
+  const autoSz = Math.round(Math.max(32, Math.min(600, targetScreenPx / zm)));
+  iconSz = autoSz;
+  document.getElementById('isz').value = Math.min(600, autoSz);
+  document.getElementById('isv').textContent = autoSz;
+  setIS(autoSz);
+
+  upT();
+}
+
+cvs.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = cvs.getBoundingClientRect();
+  const factor = e.deltaY > 0 ? 0.92 : 1.08;
+  sZ(zm * factor, e.clientX - r.left, e.clientY - r.top);
+}, {passive: false});
+
+function cXY(e) {
+  const r = cvs.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left - px) / zm,
+    y: (e.clientY - r.top - py) / zm
+  };
+}
+
+// ===== MOUSE HANDLERS =====
+cvs.addEventListener('mousedown', (e) => {
+  const t = e.target;
+  const isCanvas = t === cvs || t === wrap || t === pImg || t === hCvs || t === wCvs || t === sCvs || t === zCvs;
+  
+  if (isCanvas) {
+    if (mode === 'calibrate' && e.button === 0) {
+      addCal(cXY(e));
+      return;
+    }
+    
+    if (mode === 'draw' && e.button === 0) {
+      handleDrawClick(cXY(e), e);
+      return;
+    }
+    
+    // v3.1: Modo de dibujo de zonas
+    if (mode === 'zone' && e.button === 0) {
+      const pos = cXY(e);
+      zoneDrawPoints.push(pos);
+      drawAllZones();
+      return;
+    }
+    
+    if (e.button === 0) {
+      isPan = true;
+      panS = {x: e.clientX - px, y: e.clientY - py};
+      cvs.classList.add('pan');
+      desel();
+    }
+  }
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (activeApDrag) {
+    const dx = (e.clientX - activeApDrag.x) / zm;
+    const dy = (e.clientY - activeApDrag.y) / zm;
+    activeApDrag.ap.x = activeApDrag.apX + dx;
+    activeApDrag.ap.y = activeApDrag.apY + dy;
+    activeApDrag.mk.style.left = (activeApDrag.ap.x - iconSz / 2) + 'px';
+    activeApDrag.mk.style.top = (activeApDrag.ap.y - iconSz / 2) + 'px';
+    if (showWaves) drawWaveStrengthOverlay();
+    return;
+  }
+  if (isPan) {
+    px = e.clientX - panS.x;
+    py = e.clientY - panS.y;
+    upT();
+  }
+  
+  if (mode === 'draw' && isDrawing) {
+    handleDrawMove(cXY(e));
+  }
+});
+
+window.addEventListener('mouseup', (e) => {
+  if (activeApDrag) {
+    activeApDrag = null;
+    draggingAp = false;
+    if (heatmapDuringDrag) {
+      showHeat = true;
+      hCvs.style.display = 'block';
+      reH();
+    }
+    heatmapDuringDrag = false;
+    markModified();
+    if (showWaves) drawWaveStrengthOverlay();
+    return;
+  }
+  isPan = false;
+  cvs.classList.remove('pan');
+  
+  if (mode === 'draw' && isDrawing) {
+    handleDrawRelease(cXY(e));
+  }
+});
+
+// ===== MODES =====
+function setMode(m) {
+  mode = m;
+  
+  ['mSel', 'mCal', 'mDraw'].forEach(id => {
+    document.getElementById(id).classList.remove('on');
+  });
+  
+  const btnMap = {select: 'mSel', calibrate: 'mCal', draw: 'mDraw'};
+  if (btnMap[m]) document.getElementById(btnMap[m]).classList.add('on');
+  
+  cvs.classList.remove('cross', 'draw', 'zone');
+  
+  if (m === 'draw') {
+    cvs.classList.add('draw');
+    stab(2);  // Switch to drawing tab
+  }
+  
+  if (m === 'calibrate') {
+    cvs.classList.add('cross');
+    calPts = [];
+    document.querySelectorAll('.draw-point').forEach(d => d.remove());
+    document.querySelectorAll('.draw-line').forEach(d => d.remove());
+    stab(1);  // Switch to scale tab
+  }
+
+  if (m === 'zone') {
+    cvs.classList.add('zone');
+    stab(3);
+  }
+}
+
+// ===== DRAWING TOOLS =====
+function setDrawTool(tool) {
+  drawTool = (tool === 'line' || tool === 'wall' || tool === 'rect') ? tool : 'rect';
+
+  // Actualizar botones activos
+  document.querySelectorAll('.tool-palette .tool-btn').forEach(b => b.classList.remove('on'));
+  const btnMap = { rect: 'toolRect', wall: 'toolWall', line: 'toolLine' };
+  const btn = document.getElementById(btnMap[drawTool]);
+  if (btn) btn.classList.add('on');
+
+  // Reset drawing state
+  drawPoints = [];
+  isDrawing = false;
+  clearDrawPreview();
+
+  // Auto-switch a modo dibujo
+  if (mode !== 'draw') setMode('draw');
+}
+
+function handleDrawClick(pt, e) {
+  if (drawTool === 'line') {
+    if (!isDrawing) {
+      drawPoints = [pt];
+      isDrawing = true;
+      showDrawPoint(pt);
+    } else {
+      drawPoints.push(pt);
+      finishLineStruct();
+      isDrawing = false;
+      clearDrawPreview();
+    }
+  } else if (drawTool === 'rect' || drawTool === 'wall') {
+    if (!isDrawing) {
+      drawPoints = [pt];
+      isDrawing = true;
+      showDrawPoint(pt);
+    }
+  } else if (drawTool === 'poly') {
+    drawPoints.push(pt);
+    showDrawPoint(pt);
+    if (drawPoints.length > 1) {
+      showDrawLine(drawPoints[drawPoints.length - 2], pt);
+    }
+    if (e.detail === 2 && drawPoints.length >= 3) {
+      finishPolyStruct();
+      drawPoints = [];
+      clearDrawPreview();
+    }
+  }
+}
+
+function handleDrawMove(pt) {
+  if (!isDrawing) return;
+
+  if (drawTool === 'line' && drawPoints.length === 1) {
+    clearDrawPreview();
+    showDrawPoint(drawPoints[0]);
+    showDrawLine(drawPoints[0], pt);
+  } else if ((drawTool === 'rect' || drawTool === 'wall') && drawPoints.length === 1) {
+    clearDrawPreview();
+    showDrawRect(drawPoints[0], pt);
+  }
+}
+
+function handleDrawRelease(pt) {
+  if (!isDrawing) return;
+
+  if (drawTool === 'rect') {
+    drawPoints.push(pt);
+    finishRectStruct();
+    isDrawing = false;
+    clearDrawPreview();
+  } else if (drawTool === 'wall') {
+    drawPoints.push(pt);
+    finishWallRoom();
+    isDrawing = false;
+    clearDrawPreview();
+  }
+}
+
+function showDrawPoint(pt) {
+  const dot = document.createElement('div');
+  dot.className = 'draw-point';
+  dot.style.left = pt.x + 'px';
+  dot.style.top = pt.y + 'px';
+  wrap.appendChild(dot);
+}
+
+function showDrawLine(p1, p2) {
+  const line = document.createElement('div');
+  line.className = 'draw-line';
+  
+  const len = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+  
+  line.style.width = len + 'px';
+  line.style.left = p1.x + 'px';
+  line.style.top = p1.y + 'px';
+  line.style.transform = `rotate(${angle}rad)`;
+  
+  wrap.appendChild(line);
+}
+
+function showDrawRect(p1, p2) {
+  const rect = document.createElement('div');
+  rect.className = 'draw-preview';
+  
+  const x = Math.min(p1.x, p2.x);
+  const y = Math.min(p1.y, p2.y);
+  const w = Math.abs(p2.x - p1.x);
+  const h = Math.abs(p2.y - p1.y);
+  
+  rect.style.cssText = `
+    position: absolute;
+    left: ${x}px;
+    top: ${y}px;
+    width: ${w}px;
+    height: ${h}px;
+    border: 2px solid var(--ac);
+    background: rgba(59, 130, 246, .1);
+  `;
+  
+  wrap.appendChild(rect);
+}
+
+function clearDrawPreview() {
+  document.querySelectorAll('.draw-point, .draw-line, .draw-preview').forEach(el => el.remove());
+}
+
+function finishLineStruct() {
+  if (drawPoints.length !== 2) return;
+  
+  const p1 = drawPoints[0];
+  const p2 = drawPoints[1];
+  
+  const st = {
+    id: nSt++,
+    type: structType,
+    tool: 'line',
+    points: [p1, p2],
+    x: p1.x,
+    y: p1.y,
+    w: p2.x - p1.x,
+    h: p2.y - p1.y,
+    db: STD[structType],
+    // v3.1: Altura de la estructura
+    height: STH[structType].default,  // null = llega al techo
+    goesToCeiling: STH[structType].goesToCeiling
+  };
+
+  if (nextStructGoesToCeilingOverride !== null) {
+    st.goesToCeiling = nextStructGoesToCeilingOverride;
+    st.height = nextStructHeightOverride;
+  }
+
+  if (!st.goesToCeiling && st.height !== null) {
+    st.height = Math.min(st.height, ceilingHeight);
+  }
+  
+  structs.push(st);
+  updSL();
+  drawAllST();
+  markModified();
+  
+  const len = Math.hypot(st.w, st.h) / pxM;
+  toast(`${STL[structType]} agregado (${len.toFixed(1)}m)`);
+  if (showSectionView) drawSectionView();
+}
+
+function finishRectStruct() {
+  if (drawPoints.length !== 2) return;
+
+  const p1 = drawPoints[0];
+  const p2 = drawPoints[1];
+  const minX = Math.min(p1.x, p2.x);
+  const minY = Math.min(p1.y, p2.y);
+  const rectW = Math.abs(p2.x - p1.x);
+  const rectH = Math.abs(p2.y - p1.y);
+
+  if (rectW < 2 || rectH < 2) return;
+
+  // v3.2: Densidad de llenado para racks
+  let dbValue = STD[structType];
+  let density = 100;
+  if (structType.startsWith('rack')) {
+    density = parseInt(document.getElementById('rackDensity').value) || 80;
+    dbValue = Math.round(STD[structType] * (density / 100));
+  }
+
+  const st = {
+    id: nSt++,
+    type: structType,
+    tool: 'rect',
+    x: minX,
+    y: minY,
+    w: rectW,
+    h: rectH,
+    db: dbValue,
+    density: density,
+    height: STH[structType].default,
+    goesToCeiling: STH[structType].goesToCeiling
+  };
+
+  if (nextStructGoesToCeilingOverride !== null) {
+    st.goesToCeiling = nextStructGoesToCeilingOverride;
+    st.height = nextStructHeightOverride;
+  }
+
+  if (!st.goesToCeiling && st.height !== null) {
+    st.height = Math.min(st.height, ceilingHeight);
+  }
+
+  structs.push(st);
+  updSL();
+  drawAllST();
+  markModified();
+
+  const wM = rectW / pxM;
+  const hM = rectH / pxM;
+  const densityStr = structType.startsWith('rack') ? ` [${density}%]` : '';
+  toast(`${STL[structType]} (${wM.toFixed(1)}x${hM.toFixed(1)}m)${densityStr}`);
+  if (showSectionView) drawSectionView();
+}
+
+// v3.2: Herramienta "Cuarto" — dibuja un rectangulo y genera 4 paredes (lineas)
+function finishWallRoom() {
+  if (drawPoints.length !== 2) return;
+
+  const p1 = drawPoints[0];
+  const p2 = drawPoints[1];
+  const minX = Math.min(p1.x, p2.x);
+  const minY = Math.min(p1.y, p2.y);
+  const maxX = Math.max(p1.x, p2.x);
+  const maxY = Math.max(p1.y, p2.y);
+
+  if (maxX - minX < 5 || maxY - minY < 5) return;
+
+  const corners = [
+    { x: minX, y: minY }, // top-left
+    { x: maxX, y: minY }, // top-right
+    { x: maxX, y: maxY }, // bottom-right
+    { x: minX, y: maxY }  // bottom-left
+  ];
+
+  const wallNames = ['superior', 'derecha', 'inferior', 'izquierda'];
+
+  for (let i = 0; i < 4; i++) {
+    const c1 = corners[i];
+    const c2 = corners[(i + 1) % 4];
+
+    const st = {
+      id: nSt++,
+      type: structType,
+      tool: 'line',
+      points: [c1, c2],
+      x: c1.x,
+      y: c1.y,
+      w: c2.x - c1.x,
+      h: c2.y - c1.y,
+      db: STD[structType],
+      height: STH[structType].default,
+      goesToCeiling: STH[structType].goesToCeiling
+    };
+
+    if (nextStructGoesToCeilingOverride !== null) {
+      st.goesToCeiling = nextStructGoesToCeilingOverride;
+      st.height = nextStructHeightOverride;
+    }
+
+    if (!st.goesToCeiling && st.height !== null) {
+      st.height = Math.min(st.height, ceilingHeight);
+    }
+
+    structs.push(st);
+  }
+
+  updSL();
+  drawAllST();
+  markModified();
+
+  const wM = (maxX - minX) / pxM;
+  const hM = (maxY - minY) / pxM;
+  toast(`Cuarto ${STL[structType]} (${wM.toFixed(1)}x${hM.toFixed(1)}m) — 4 paredes`);
+  if (showSectionView) drawSectionView();
+}
+
+function finishPolyStruct() {
+  if (drawPoints.length < 3) return;
+  
+  // Create lines between consecutive points
+  for (let i = 0; i < drawPoints.length; i++) {
+    const p1 = drawPoints[i];
+    const p2 = drawPoints[(i + 1) % drawPoints.length];
+    
+    const st = {
+      id: nSt++,
+      type: structType,
+      tool: 'poly',
+      points: [p1, p2],
+      x: p1.x,
+      y: p1.y,
+      w: p2.x - p1.x,
+      h: p2.y - p1.y,
+      db: STD[structType],
+      // v3.1: Altura de la estructura
+      height: STH[structType].default,
+      goesToCeiling: STH[structType].goesToCeiling
+    };
+
+    if (nextStructGoesToCeilingOverride !== null) {
+      st.goesToCeiling = nextStructGoesToCeilingOverride;
+      st.height = nextStructHeightOverride;
+    }
+
+    if (!st.goesToCeiling && st.height !== null) {
+      st.height = Math.min(st.height, ceilingHeight);
+    }
+    
+    structs.push(st);
+  }
+  
+  updSL();
+  drawAllST();
+  markModified();
+  
+  toast(`Polígono ${STL[structType]} (${drawPoints.length} lados)`);
+  if (showSectionView) drawSectionView();
+}
+
+// ===== STRUCTURE TYPE =====
+function setST(type) {
+  structType = type === 'rack' || type === 'rack_full' ? 'rack_metal' : type;
+  nextStructHeightOverride = null;
+  nextStructGoesToCeilingOverride = null;
+
+  document.querySelectorAll('.st').forEach(el => el.classList.remove('on'));
+  const btn = document.getElementById('st' + type);
+  if (btn) btn.classList.add('on');
+
+  // v3.2: Mostrar/ocultar panel de densidad para racks
+  const densPanel = document.getElementById('rackDensityPanel');
+  if (densPanel) densPanel.style.display = structType.startsWith('rack') ? 'block' : 'none';
+
+  if (mode !== 'draw') {
+    setMode('draw');
+  }
+}
+
+function applyStructurePreset(preset) {
+  const presets = {
+    rack_textil_3m: {type: 'rack_full', height: 3.0, goesToCeiling: false, label: 'Anaquel textil 3m'},
+    rack_textil_4m: {type: 'rack_metal', height: 4.0, goesToCeiling: false, label: 'Anaquel textil 4m'},
+    col_concreto: {type: 'elevator', height: null, goesToCeiling: true, label: 'Columna de concreto'},
+    wall_full: {type: 'wall', height: null, goesToCeiling: true, label: 'Pared hasta techo'}
+  };
+  const p = presets[preset];
+  if (!p) return;
+  setST(p.type);
+  nextStructHeightOverride = p.height;
+  nextStructGoesToCeilingOverride = p.goesToCeiling;
+  toast(`📚 Preset: ${p.label}`);
+}
+
+function drawAllST() {
+  sCtx.clearRect(0, 0, sCvs.width, sCvs.height);
+
+  structs.forEach(st => {
+    sCtx.strokeStyle = STC[st.type];
+    sCtx.lineCap = 'round';
+
+    if (st.tool === 'rect' && st.w > 0 && st.h > 0) {
+      // Filled rectangle with border
+      sCtx.lineWidth = 6;
+      sCtx.beginPath();
+      sCtx.rect(st.x, st.y, st.w, st.h);
+      sCtx.fillStyle = STC[st.type];
+      sCtx.globalAlpha = 0.18;
+      sCtx.fill();
+      sCtx.globalAlpha = 1;
+      sCtx.stroke();
+    } else {
+      sCtx.lineWidth = 8;
+      sCtx.beginPath();
+      sCtx.moveTo(st.x, st.y);
+      sCtx.lineTo(st.x + st.w, st.y + st.h);
+      sCtx.stroke();
+
+      // Racks get filled area
+      if (st.type.startsWith('rack')) {
+        sCtx.fillStyle = STC[st.type];
+        sCtx.globalAlpha = 0.25;
+
+        const thickness = 24;
+        const angle = Math.atan2(st.h, st.w);
+        const len = Math.hypot(st.w, st.h);
+
+        sCtx.save();
+        sCtx.translate(st.x, st.y);
+        sCtx.rotate(angle);
+        sCtx.fillRect(0, -thickness/2, len, thickness);
+        sCtx.restore();
+
+        sCtx.globalAlpha = 1;
+      }
+    }
+  });
+}
+
+function updSL() {
+  document.getElementById('stCnt').textContent = structs.length;
+  const l = document.getElementById('stList');
+  l.innerHTML = '';
+  
+  structs.forEach(st => {
+    const d = document.createElement('div');
+    d.className = 'pl';
+    
+    const toolIcon = st.tool === 'rect' ? '⬜' : st.tool === 'poly' ? '⬡' : '📐';
+    const dimStr = (st.tool === 'rect' && st.w > 0 && st.h > 0)
+      ? `${(st.w/pxM).toFixed(1)}x${(st.h/pxM).toFixed(1)}m`
+      : `${(Math.hypot(st.w||0, st.h||0)/pxM).toFixed(1)}m`;
+    const densStr = (st.density && st.density < 100) ? ` ${st.density}%` : '';
+
+    d.innerHTML = `
+      <div class="d" style="background:${STC[st.type]}"></div>
+      <div class="n">${toolIcon} ${STL[st.type]} (${dimStr})${densStr}</div>
+      <button class="xb">x</button>
+    `;
+    
+    d.querySelector('.xb').onclick = (e) => {
+      e.stopPropagation();
+      
+      const idx = structs.findIndex(s => s.id === st.id);
+      if (idx !== -1) {
+        structs.splice(idx, 1);
+        updSL();
+        drawAllST();
+        markModified();
+        reH();
+      }
+    };
+    
+    l.appendChild(d);
+  });
+}
+
+function clrST() {
+  if (!confirm(`¿Eliminar ${structs.length} estructuras?`)) return;
+  
+  structs = [];
+  updSL();
+  drawAllST();
+  markModified();
+  reH();
+  
+  toast('🗑️ Estructuras eliminadas');
+  if (showSectionView) drawSectionView();
+}
+
+// ===== CALIBRATION =====
+function applyScale() {
+  const s = +document.getElementById('pScale').value;
+  const d = +document.getElementById('pDPI').value;
+  
+  pxM = (d * 100) / (2.54 * s);
+  
+  document.getElementById('calSt').textContent = `✅ 1:${s} @ ${d}DPI → 1m = ${pxM.toFixed(1)}px`;
+  
+  toast(`Escala: 1:${s} @ ${d}DPI`);
+  markModified();
+  reH();
+}
+
+function addCal(p) {
+  if (calPts.length >= 2) {
+    calPts = [];
+    document.querySelectorAll('.draw-point, .draw-line').forEach(d => d.remove());
+  }
+  
+  calPts.push(p);
+  showDrawPoint(p);
+  
+  if (calPts.length === 2) {
+    calPxD = Math.hypot(calPts[1].x - calPts[0].x, calPts[1].y - calPts[0].y);
+    showDrawLine(calPts[0], calPts[1]);
+    updCal();
+    setMode('select');
+  }
+  
+  toast(calPts.length === 1 ? 'Punto 1 — coloca punto 2' : '✅ Calibrado');
+}
+
+function updCal() {
+  const d = parseFloat(document.getElementById('calD').value) || 10;
+  
+  if (calPxD > 0) {
+    pxM = calPxD / d;
+    
+    document.getElementById('calSt').textContent = `✅ ${d}m = ${Math.round(calPxD)}px → 1m = ${pxM.toFixed(1)}px`;
+    
+    markModified();
+  }
+  
+  reH();
+}
+
+// ===== DRAG & DROP =====
+function tDrag(e, t) {
+  e.dataTransfer.setData('text/plain', t);
+  e.dataTransfer.effectAllowed = 'copy';
+}
+
+cvs.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+cvs.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const t = e.dataTransfer.getData('text/plain');
+  
+  if (!t || !planLoaded) return;
+  
+  const pos = cXY(e);
+  addAP(pos.x, pos.y, defaultColor);
+});
+
+// ===== ACCESS POINTS =====
+function addAP(x, y, color, d) {
+  const ap = {
+    id: nId++,
+    x,
+    y,
+    color: color || defaultColor,
+    name: d?.name || `AP${String(nId - 1).padStart(2, '0')}`,
+    r1Ch: d?.r1Ch || '',
+    r1Val: d?.r1Val || '0',
+    r2Ch: d?.r2Ch || '',
+    r2Val: d?.r2Val || '0',
+    // v3.1: Altura y potencias dual-band
+    height: d?.height !== undefined ? d.height : apMountHeight,
+    txPower2g: d?.txPower2g !== undefined ? d.txPower2g : txPower2g,
+    txPower5g: d?.txPower5g !== undefined ? d.txPower5g : txPower5g,
+    antennaGain: d?.antennaGain !== undefined ? d.antennaGain : antennaGain
+  };
+
+  if (ap.height > ceilingHeight) ap.height = ceilingHeight;
+  
+  aps.push(ap);
+  renAP(ap);
+  updL();
+  markModified();
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+  
+  toast(`${ap.name} agregado a ${ap.height.toFixed(1)}m`);
+  if (showSectionView) drawSectionView();
+  return ap;
+}
+
+// v3.2: Agregar AP en el centro visible del canvas
+function addAPCenter() {
+  if (!planLoaded) { toast('Carga un plano primero'); return; }
+  const r = cvs.getBoundingClientRect();
+  const cx = (r.width / 2 - px) / zm;
+  const cy = (r.height / 2 - py) / zm;
+  addAP(cx, cy, defaultColor);
+}
+
+function applyAPMountHeight() {
+  const maxH = Math.max(0.5, ceilingHeight);
+  if (apMountHeight > maxH) apMountHeight = maxH;
+  aps.forEach(ap => {
+    ap.height = Math.min(apMountHeight, ceilingHeight);
+    refAP(ap);
+  });
+  if (showSectionView) drawSectionView();
+}
+
+function renAP(ap) {
+  const mk = document.createElement('div');
+  mk.className = 'mk';
+  mk.id = 'ap-' + ap.id;
+  
+  const h = iconSz / 2;
+  mk.style.left = (ap.x - h) + 'px';
+  mk.style.top = (ap.y - h) + 'px';
+  
+  const c = document.createElement('div');
+  c.className = 'ac';
+  c.style.width = c.style.height = iconSz + 'px';
+  c.style.background = ap.color;
+  c.innerHTML = WSVG;
+  
+  const svg = c.querySelector('svg');
+  svg.style.width = (iconSz * 0.5) + 'px';
+  svg.style.height = (iconSz * 0.5) + 'px';
+  
+  mk.appendChild(c);
+  
+  const tg = document.createElement('div');
+  tg.className = 'tg';
+  tg.textContent = ap.name;
+  mk.appendChild(tg);
+  
+  mk.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    
+    selAP(ap.id);
+    activeApDrag = {ap, mk, x: e.clientX, y: e.clientY, apX: ap.x, apY: ap.y};
+    draggingAp = true;
+    heatmapDuringDrag = showHeat;
+    if (showHeat) {
+      showHeat = false;
+      hCvs.style.display = 'none';
+      document.getElementById('legend').classList.remove('show');
+    }
+  });
+  
+  // Context menu
+  mk.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    ctxId = ap.id;
+    shCtx(e.clientX, e.clientY);
+  });
+  
+  wrap.appendChild(mk);
+  
+  mk._cl = () => {
+    if (activeApDrag && activeApDrag.ap.id === ap.id) {
+      activeApDrag = null;
+      draggingAp = false;
+    }
+    mk.remove();
+  };
+}
+
+function selAP(id) {
+  desel();
+  selId = id;
+  
+  const mk = document.getElementById('ap-' + id);
+  if (mk) mk.classList.add('sel');
+  
+  updL();
+}
+
+function desel() {
+  if (selId) {
+    const mk = document.getElementById('ap-' + selId);
+    if (mk) mk.classList.remove('sel');
+    selId = null;
+    updL();
+  }
+}
+
+function rmAP(id) {
+  const idx = aps.findIndex(a => a.id === id);
+  if (idx === -1) return;
+  
+  const ap = aps[idx];
+  const mk = document.getElementById('ap-' + id);
+  
+  if (mk) {
+    mk._cl?.();
+    mk.remove();
+  }
+  
+  aps.splice(idx, 1);
+  
+  if (selId === id) selId = null;
+  
+  updL();
+  markModified();
+  reH();
+  
+  toast(`${ap.name} eliminado`);
+}
+
+function refAP(ap) {
+  const mk = document.getElementById('ap-' + ap.id);
+  if (!mk) return;
+  
+  mk._cl?.();
+  mk.remove();
+  
+  renAP(ap);
+  
+  if (selId === ap.id) {
+    const newMk = document.getElementById('ap-' + ap.id);
+    if (newMk) newMk.classList.add('sel');
+  }
+}
+
+function clearAllAPs() {
+  if (!aps.length) return;
+  if (!confirm(`¿Eliminar ${aps.length} APs?`)) return;
+  
+  aps.forEach(a => {
+    const mk = document.getElementById('ap-' + a.id);
+    if (mk) {
+      mk._cl?.();
+      mk.remove();
+    }
+  });
+  
+  aps = [];
+  selId = null;
+  
+  updL();
+  markModified();
+  reH();
+  
+  toast('🗑️ APs eliminados');
+}
+
+function updL() {
+  document.getElementById('cnt').textContent = aps.length;
+  const l = document.getElementById('apList');
+  l.innerHTML = '';
+  
+  aps.forEach(ap => {
+    const d = document.createElement('div');
+    d.className = 'pl' + (selId === ap.id ? ' sel' : '');
+    
+    d.innerHTML = `
+      <div class="d" style="background:${ap.color}"></div>
+      <div class="n">${ap.name}</div>
+      <button class="xb">×</button>
+    `;
+    
+    d.querySelector('.n').onclick = () => {
+      selAP(ap.id);
+      
+      const r = cvs.getBoundingClientRect();
+      px = r.width/2 - ap.x * zm;
+      py = r.height/2 - ap.y * zm;
+      upT();
+    };
+    
+    d.querySelector('.xb').onclick = (e) => {
+      e.stopPropagation();
+      rmAP(ap.id);
+    };
+    
+    l.appendChild(d);
+  });
+}
+
+// ===== TOGGLES =====
+function togH() {
+  showHeat = !showHeat;
+  document.getElementById('bH').classList.toggle('on', showHeat);
+  hCvs.style.display = showHeat ? 'block' : 'none';
+  document.getElementById('legend').classList.toggle('show', showHeat && aps.length > 0);
+  reH();
+}
+
+function togW() {
+  showWaves = !showWaves;
+  document.getElementById('bW').classList.toggle('on', showWaves);
+  wCvs.style.display = showWaves ? 'block' : 'none';
+  
+  if (showWaves) {
+    startWaves();
+    startWaveStrengthOverlay();
+    drawWaveStrengthOverlay();
+  } else {
+    stopWaves();
+    stopWaveStrengthOverlay();
+  }
+  
+  markModified();
+}
+
+function setBand(b) {
+  band = b;
+  document.getElementById('b24').classList.toggle('on', b === 24);
+  document.getElementById('b5').classList.toggle('on', b === 5);
+  toast(b === 24 ? 'Banda 2.4GHz: mayor alcance, menor capacidad' : 'Banda 5GHz: menor alcance, mayor capacidad');
+  markModified();
+  updateZoneStats();
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+}
+
+function setUIMode(mode) {
+  uiMode = mode === 'advanced' ? 'advanced' : 'basic';
+  const adv = uiMode === 'advanced';
+  const tx24 = document.getElementById('tx24');
+  const tx5 = document.getElementById('tx5');
+  const ag = document.getElementById('ag');
+  const ple = document.getElementById('ple');
+  const maxR = document.getElementById('maxR');
+  const advPanel = document.getElementById('advancedControls');
+  if (!tx24 || !tx5 || !ag || !ple || !maxR) return;
+  tx24.disabled = false;
+  tx5.disabled = false;
+  ag.disabled = false;
+  ple.disabled = !adv;
+  maxR.disabled = false;
+  // v3.2: Mostrar/ocultar controles avanzados
+  if (advPanel) advPanel.style.display = adv ? 'block' : 'none';
+  toast(adv ? 'Modo avanzado activo' : 'Modo basico activo');
+  if (!adv) {
+    const env = document.getElementById('envType').value;
+    setEnvironment(env);
+  }
+  if (showWaves) drawWaveStrengthOverlay();
+}
+
+function togPanel() {
+  document.getElementById('panel').classList.toggle('hide');
+  cvs.classList.toggle('lp');
+  
+  const isHidden = document.getElementById('panel').classList.contains('hide');
+  document.getElementById('pbar').style.left = isHidden ? '0' : '320px';
+}
+
+function stab(i) {
+  document.querySelectorAll('.tab').forEach((t, j) => {
+    t.classList.toggle('on', j === i);
+  });
+  
+  document.querySelectorAll('.tc').forEach((c, j) => {
+    c.classList.toggle('on', j === i);
+  });
+}
+
+// ===== STYLE =====
+function setDefaultColor(color) {
+  defaultColor = color;
+  markModified();
+}
+
+function setIS(sz) {
+  iconSz = sz;
+  
+  aps.forEach(ap => {
+    const mk = document.getElementById('ap-' + ap.id);
+    if (!mk) return;
+    
+    const h = sz / 2;
+    mk.style.left = (ap.x - h) + 'px';
+    mk.style.top = (ap.y - h) + 'px';
+    
+    const ac = mk.querySelector('.ac');
+    if (ac) {
+      ac.style.width = ac.style.height = sz + 'px';
+      
+      const svg = ac.querySelector('svg');
+      if (svg) {
+        svg.style.width = (sz * 0.5) + 'px';
+        svg.style.height = (sz * 0.5) + 'px';
+      }
+    }
+  });
+  
+  markModified();
+}
+
+function setWaveSpeed(speed) {
+  waveSpeed = speed;
+  markModified();
+}
+
+function setWaveOpacity(opacity) {
+  waveOpacity = opacity;
+  wCvs.style.opacity = opacity;
+  markModified();
+}
+
+function setQuality(q) {
+  renderQuality = q;
+  
+  // Ajustar resolución según calidad
+  if (q === 'low') {
+    document.getElementById('hrR').value = '10';
+    document.getElementById('hrv').textContent = '10';
+  } else if (q === 'high') {
+    document.getElementById('hrR').value = '4';
+    document.getElementById('hrv').textContent = '4';
+  } else {
+    document.getElementById('hrR').value = '6';
+    document.getElementById('hrv').textContent = '6';
+  }
+  
+  markModified();
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+}
+
+function runCalibrationWizard() {
+  const env = prompt('Paso 1/4 - Entorno (almacen_textil_peru/oficina_peru/retail_peru)', document.getElementById('envType').value || 'almacen_textil_peru');
+  if (!env) return;
+  if (document.getElementById('envType').querySelector(`option[value="${env}"]`)) {
+    document.getElementById('envType').value = env;
+    setEnvironment(env);
+  }
+
+  const ch = prompt('Paso 2/4 - Altura de techo (m)', String(ceilingHeight));
+  if (!ch) return;
+  const chVal = parseFloat(ch);
+  if (Number.isFinite(chVal) && chVal >= 2.5 && chVal <= 8.0) {
+    ceilingHeight = chVal;
+    globalCeilingSource = 'manual';
+    document.getElementById('ceilingH').value = chVal;
+    document.getElementById('ceilingv').textContent = chVal.toFixed(1);
+    document.getElementById('apMountH').max = String(chVal);
+  }
+
+  const model = prompt('Paso 3/4 - Modelo AP (431f/421e/432f/ubnt_ac_pro/custom)', document.getElementById('apModel').value || '431f');
+  if (!model) return;
+  if (document.getElementById('apModel').querySelector(`option[value="${model}"]`) && model !== 'custom') {
+    applyAPModel(model);
+  } else {
+    document.getElementById('apModel').value = 'custom';
+  }
+
+  const apH = prompt('Paso 4/4 - Altura de montaje AP por defecto (m)', String((ceilingHeight * 0.85).toFixed(1)));
+  if (!apH) return;
+  const apHVal = parseFloat(apH);
+  if (Number.isFinite(apHVal) && apHVal > 0.5 && apHVal <= ceilingHeight) {
+    apMountHeight = apHVal;
+    document.getElementById('apMountH').value = apHVal;
+    document.getElementById('apMountv').textContent = apHVal.toFixed(1);
+    applyAPMountHeight();
+    if (showSectionView) drawSectionView();
+    reH();
+  }
+
+  markModified();
+  toast('✅ Calibración guiada completada');
+}
+
+// v3.2: Validador con feedback visual (modal en vez de alert)
+function runDesignValidator() {
+  const issues = [];
+  const warnings = [];
+  const gain = parseFloat(document.getElementById('ag').value) || 0;
+  const tx24 = parseFloat(document.getElementById('tx24').value) || 0;
+  const tx5 = parseFloat(document.getElementById('tx5').value) || 0;
+
+  // Errores criticos
+  if (aps.length === 0) issues.push('No hay APs colocados');
+  if ((tx24 + gain) > 30) issues.push('2.4GHz excede 30 dBm EIRP (limite OSIPTEL)');
+  if ((tx5 + gain) > 30) issues.push('5GHz excede 30 dBm EIRP (limite maximo)');
+
+  aps.forEach(ap => {
+    if ((ap.height || 0) > ceilingHeight) issues.push(`${ap.name}: altura AP (${ap.height}m) mayor que techo (${ceilingHeight}m)`);
+  });
+  structs.forEach((st, i) => {
+    if (!st.goesToCeiling && st.height !== null && st.height > ceilingHeight) {
+      issues.push(`Estructura #${i + 1} (${STL[st.type]}): altura mayor que techo`);
+    }
+  });
+
+  // Advertencias
+  if (zones.length === 0) warnings.push('No hay zonas definidas — recomendado para planos con areas distintas');
+  if (pxM < 10 || pxM > 200) warnings.push('Escala posiblemente incorrecta (pxM=' + pxM.toFixed(1) + ')');
+  if (structs.length === 0 && aps.length > 0) warnings.push('No hay estructuras dibujadas — el heatmap no considerara paredes');
+
+  // Mostrar resultado como toast (sin alert bloqueante)
+  if (issues.length === 0 && warnings.length === 0) {
+    toast('Validacion OK — sin problemas');
+    return;
+  }
+
+  let msg = '';
+  if (issues.length > 0) msg += 'ERRORES:\n' + issues.map(i => '  - ' + i).join('\n') + '\n\n';
+  if (warnings.length > 0) msg += 'ADVERTENCIAS:\n' + warnings.map(w => '  - ' + w).join('\n');
+  alert(msg);
+  toast(`Validacion: ${issues.length} errores, ${warnings.length} advertencias`);
+}
+
+// v3.2: Reporte profesional en HTML legible (no JSON crudo)
+function exportProfessionalReport() {
+  if (aps.length === 0) { toast('Agrega APs antes de generar reporte'); return; }
+
+  const bandStr = band === 24 ? '2.4 GHz' : '5 GHz';
+  const date = new Date().toLocaleString('es-PE');
+
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Reporte WiFi — ${projectName || 'Sin titulo'}</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#333;padding:0 20px}
+h1{color:#1a5276;border-bottom:3px solid #2ecc71;padding-bottom:10px}
+h2{color:#2e7d32;margin-top:30px}
+table{width:100%;border-collapse:collapse;margin:10px 0}
+th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:13px}
+th{background:#f5f5f5;font-weight:bold}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold}
+.ok{background:#e8f5e9;color:#2e7d32} .warn{background:#fff3e0;color:#e65100}
+footer{margin-top:40px;padding-top:10px;border-top:1px solid #ddd;font-size:11px;color:#999}
+</style></head><body>
+<h1>Reporte WiFi — ${projectName || 'Sin titulo'}</h1>
+<p><b>Fecha:</b> ${date} | <b>Banda:</b> ${bandStr} | <b>APs:</b> ${aps.length} | <b>Estructuras:</b> ${structs.length}</p>
+
+<h2>Configuracion General</h2>
+<table>
+<tr><th>Parametro</th><th>Valor</th></tr>
+<tr><td>Altura del techo</td><td>${ceilingHeight} m</td></tr>
+<tr><td>Altura del AP</td><td>${apMountHeight} m</td></tr>
+<tr><td>Perdida por entorno (n)</td><td>${pathLossExponent}</td></tr>
+<tr><td>Alcance maximo</td><td>${maxEffectiveRange} m</td></tr>
+<tr><td>Escala</td><td>1m = ${pxM.toFixed(1)} px</td></tr>
+</table>
+
+<h2>Access Points</h2>
+<table>
+<tr><th>#</th><th>Nombre</th><th>Altura</th><th>Tx 2.4G</th><th>Tx 5G</th><th>Ganancia</th><th>EIRP 2.4G</th><th>EIRP 5G</th></tr>`;
+
+  aps.forEach((ap, i) => {
+    const tx2 = ap.txPower2g || 20, tx5 = ap.txPower5g || 23, g = ap.antennaGain || 5;
+    const eirp2 = tx2 + g, eirp5 = tx5 + g;
+    const cls2 = eirp2 > 30 ? 'warn' : 'ok', cls5 = eirp5 > 30 ? 'warn' : 'ok';
+    html += `<tr><td>${i+1}</td><td>${ap.name}</td><td>${(ap.height||apMountHeight).toFixed(1)}m</td>
+<td>${tx2} dBm</td><td>${tx5} dBm</td><td>${g} dBi</td>
+<td><span class="badge ${cls2}">${eirp2} dBm</span></td>
+<td><span class="badge ${cls5}">${eirp5} dBm</span></td></tr>`;
+  });
+
+  html += '</table>';
+
+  if (structs.length > 0) {
+    html += '<h2>Estructuras</h2><table><tr><th>Tipo</th><th>Atenuacion</th><th>Altura</th><th>Cantidad</th></tr>';
+    const grouped = {};
+    structs.forEach(s => {
+      const k = s.type;
+      if (!grouped[k]) grouped[k] = {count: 0, db: s.db, height: s.height};
+      grouped[k].count++;
+    });
+    for (const [type, info] of Object.entries(grouped)) {
+      html += `<tr><td>${STL[type] || type}</td><td>${info.db} dB</td><td>${info.height ? info.height+'m' : 'Techo'}</td><td>${info.count}</td></tr>`;
+    }
+    html += '</table>';
+  }
+
+  if (zones.length > 0) {
+    html += '<h2>Zonas</h2><table><tr><th>Nombre</th><th>Tipo</th><th>Techo</th><th>Path Loss</th></tr>';
+    zones.forEach(z => {
+      html += `<tr><td>${z.name}</td><td>${z.type}</td><td>${z.ceilingHeight}m</td><td>${z.pathLossExponent}</td></tr>`;
+    });
+    html += '</table>';
+  }
+
+  html += `<footer>Generado por WiFi Planner Pro v3.3 — ${date}</footer></body></html>`;
+
+  const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(projectName || 'wifi')}_reporte.html`;
+  a.click();
+  toast('Reporte HTML exportado');
+}
+
+// v3.2: Aplicar configuracion con loading overlay
+function applyConfigAndRender() {
+  if (aps.length === 0) {
+    toast('Agrega al menos 1 AP primero');
+    return;
+  }
+
+  // Mostrar overlay
+  const ov = document.createElement('div');
+  ov.className = 'loading-overlay';
+  ov.id = 'loadingOverlay';
+  ov.innerHTML = '<div class="spinner"></div><div class="msg">Recalculando mapa de calor...</div>';
+  document.body.appendChild(ov);
+
+  // Dar tiempo al DOM para pintar el overlay
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      // Leer valores actuales
+      ceilingHeight = parseFloat(document.getElementById('ceilingH').value) || 5.5;
+      apMountHeight = parseFloat(document.getElementById('apMountH').value) || 4.5;
+      pathLossExponent = parseFloat(document.getElementById('ple').value) || 3.8;
+      maxEffectiveRange = parseFloat(document.getElementById('maxR').value) || 25;
+
+      if (apMountHeight > ceilingHeight) {
+        apMountHeight = ceilingHeight;
+        document.getElementById('apMountH').value = apMountHeight;
+        document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+      }
+
+      applyAPMountHeight();
+
+      // Forzar heatmap visible
+      if (!showHeat) togH();
+
+      renderHeatmap();
+
+      // Para workers async: quitar overlay despues de un delay razonable
+      setTimeout(() => {
+        const el = document.getElementById('loadingOverlay');
+        if (el) el.remove();
+        toast('Mapa de calor actualizado');
+      }, 600);
+    }, 50);
+  });
+}
+
+function toggleSectionView() {
+  showSectionView = !showSectionView;
+  const panel = document.getElementById('sectionView');
+  panel.classList.toggle('show', showSectionView);
+  if (showSectionView) drawSectionView();
+}
+
+function drawSectionView() {
+  const w = sectionCvs.width;
+  const h = sectionCvs.height;
+  sectionCtx.clearRect(0, 0, w, h);
+
+  sectionCtx.fillStyle = '#111827';
+  sectionCtx.fillRect(0, 0, w, h);
+
+  const pad = 20;
+  const ceilingY = pad;
+  const floorY = h - pad;
+  const scaleY = (floorY - ceilingY) / Math.max(2, ceilingHeight);
+
+  sectionCtx.strokeStyle = '#94a3b8';
+  sectionCtx.lineWidth = 1;
+  sectionCtx.beginPath();
+  sectionCtx.moveTo(12, floorY);
+  sectionCtx.lineTo(w - 12, floorY);
+  sectionCtx.moveTo(12, ceilingY);
+  sectionCtx.lineTo(w - 12, ceilingY);
+  sectionCtx.stroke();
+
+  sectionCtx.fillStyle = '#cbd5e1';
+  sectionCtx.font = '11px Inter';
+  sectionCtx.fillText(`Techo ${ceilingHeight.toFixed(1)}m`, 14, ceilingY - 4);
+  sectionCtx.fillText('Piso 0m', 14, floorY + 14);
+
+  const sortedStructs = structs.slice(0, 10);
+  sortedStructs.forEach((st, i) => {
+    const x = 40 + i * Math.max(24, (w - 80) / Math.max(1, sortedStructs.length));
+    const sh = st.goesToCeiling ? ceilingHeight : (st.height || 0);
+    const yTop = floorY - sh * scaleY;
+    sectionCtx.fillStyle = STC[st.type] || '#f59e0b';
+    sectionCtx.fillRect(x, yTop, 10, floorY - yTop);
+  });
+
+  const sortedAps = aps.slice(0, 10);
+  sortedAps.forEach((ap, i) => {
+    const x = 45 + i * Math.max(24, (w - 90) / Math.max(1, sortedAps.length));
+    const ah = Math.min(ap.height || 0, ceilingHeight);
+    const y = floorY - ah * scaleY;
+    sectionCtx.fillStyle = ap.color || '#22c55e';
+    sectionCtx.beginPath();
+    sectionCtx.arc(x, y, 5, 0, Math.PI * 2);
+    sectionCtx.fill();
+    sectionCtx.fillStyle = '#e5e7eb';
+    sectionCtx.font = '10px Inter';
+    sectionCtx.fillText(`${ap.name} (${ah.toFixed(1)}m)`, x + 8, y - 8);
+  });
+}
+
+function applyAPModel(model) {
+  const models = {
+    // Modelos Fortinet para Perú (v3.1)
+    '431f': {
+      tx24: 20,
+      tx5: 23,
+      gain: 5,
+      range: 30,
+      name: 'Fortinet FAP-431F'
+    },
+    '421e': {
+      tx24: 18,
+      tx5: 17,
+      gain: 5,
+      range: 25,
+      name: 'Fortinet FAP-421E'
+    },
+    '432f': {
+      tx24: 20,
+      tx5: 23,
+      gain: 5,
+      range: 32,
+      name: 'Fortinet FAP-432F'
+    },
+    'ubnt_ac_pro': {
+      tx24: 22,
+      tx5: 22,
+      gain: 3,
+      range: 28,
+      name: 'Ubiquiti UAP-AC-Pro'
+    },
+    'custom': null
+  };
+  const m = models[model];
+  if (!m && model !== 'custom') return;
+  if (model === 'custom') {
+    document.getElementById('apModel').value = 'custom';
+    toast('⚙️ Modo AP personalizado activo');
+    validateOSIPTEL();
+    reH();
+    return;
+  }
+
+  // Actualizar variables globales
+  txPower2g = m.tx24;
+  txPower5g = m.tx5;
+  antennaGain = m.gain;
+  maxEffectiveRange = m.range;
+  
+  // Actualizar UI
+  document.getElementById('tx24').value = m.tx24;
+  document.getElementById('tx24v').textContent = m.tx24;
+  document.getElementById('tx5').value = m.tx5;
+  document.getElementById('tx5v').textContent = m.tx5;
+  document.getElementById('ag').value = m.gain;
+  document.getElementById('agv').textContent = m.gain;
+  document.getElementById('maxR').value = m.range;
+  document.getElementById('maxRv').textContent = m.range;
+  document.getElementById('apModel').value = model;
+
+  toast(`✅ Configurado: ${m.name}`);
+  validateOSIPTEL();  // v3.1: Validar límites OSIPTEL
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+}
+
+function setEnvironment(type) {
+  const envSettings = {
+    // Presets específicos para Perú (v3.1)
+    'almacen_textil_peru': {
+      n: 3.8,
+      range: 25,
+      ceiling: 5.5,
+      device: 1.0,
+      name: '🇵🇪 Almacén Textil (Perú)'
+    },
+    'oficina_peru': {
+      n: 3.2,
+      range: 28,
+      ceiling: 2.8,
+      device: 1.0,
+      name: '🇵🇪 Oficina típica (Perú)'
+    },
+    'retail_peru': {
+      n: 3.5,
+      range: 22,
+      ceiling: 3.5,
+      device: 1.0,
+      name: '🇵🇪 Retail/Tienda (Perú)'
+    },
+    // Presets generales
+    'office': {n: 3.0, range: 30, ceiling: 2.8, device: 1.0, name: 'Oficina abierta'},
+    'office_walls': {n: 3.2, range: 25, ceiling: 2.8, device: 1.0, name: 'Oficina con divisiones'},
+    'retail': {n: 3.5, range: 22, ceiling: 3.5, device: 1.0, name: 'Retail general'},
+    'warehouse': {n: 4.0, range: 20, ceiling: 6.0, device: 1.0, name: 'Bodega/Warehouse'},
+    'industrial': {n: 4.5, range: 18, ceiling: 7.0, device: 1.0, name: 'Industrial'}
+  };
+  
+  const settings = envSettings[type];
+  if (!settings) return;
+  
+  pathLossExponent = settings.n;
+  maxEffectiveRange = settings.range;
+  
+  // v3.1: Actualizar alturas si están disponibles
+  if (settings.ceiling !== undefined) {
+    ceilingHeight = settings.ceiling;
+    globalCeilingSource = 'environment';
+    document.getElementById('ceilingH').value = settings.ceiling;
+    document.getElementById('ceilingv').textContent = settings.ceiling;
+    document.getElementById('apMountH').max = String(settings.ceiling);
+    if (apMountHeight > settings.ceiling) {
+      apMountHeight = settings.ceiling;
+    } else {
+      apMountHeight = Math.min(settings.ceiling, settings.ceiling * 0.85);
+    }
+    document.getElementById('apMountH').value = apMountHeight;
+    document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+    applyAPMountHeight();
+  }
+  if (settings.device !== undefined) {
+    deviceHeight = settings.device;
+    globalAntennaHeightSource = 'environment';
+    document.getElementById('deviceH').value = settings.device;
+    document.getElementById('devicev').textContent = settings.device;
+  }
+  document.getElementById('apMountH').max = String(ceilingHeight);
+  if (apMountHeight > ceilingHeight) apMountHeight = ceilingHeight;
+  document.getElementById('apMountH').value = apMountHeight;
+  document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
+  applyAPMountHeight();
+  
+  document.getElementById('ple').value = settings.n;
+  document.getElementById('plev').textContent = settings.n;
+  
+  document.getElementById('maxR').value = settings.range;
+  document.getElementById('maxRv').textContent = settings.range;
+  
+  toast(`Entorno: ${settings.name || type}`);
+  markModified();
+  if (uiMode === 'basic') {
+    // Presets automáticos por banda para separación real 2.4 vs 5GHz
+    if (band === 24) {
+      document.getElementById('tx24').value = Math.min(22, txPower2g);
+      document.getElementById('tx24v').textContent = document.getElementById('tx24').value;
+      document.getElementById('maxR').value = Math.round(settings.range * 1.25);
+      document.getElementById('maxRv').textContent = document.getElementById('maxR').value;
+    } else {
+      document.getElementById('tx5').value = Math.min(23, txPower5g);
+      document.getElementById('tx5v').textContent = document.getElementById('tx5').value;
+      document.getElementById('maxR').value = Math.round(settings.range * 0.85);
+      document.getElementById('maxRv').textContent = document.getElementById('maxR').value;
+    }
+  }
+  txPower2g = parseFloat(document.getElementById('tx24').value) || txPower2g;
+  txPower5g = parseFloat(document.getElementById('tx5').value) || txPower5g;
+  antennaGain = parseFloat(document.getElementById('ag').value) || antennaGain;
+  maxEffectiveRange = parseFloat(document.getElementById('maxR').value) || maxEffectiveRange;
+  pathLossExponent = parseFloat(document.getElementById('ple').value) || pathLossExponent;
+  updateZoneStats();
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+  if (showSectionView) drawSectionView();
+}
+
+// ===== MODAL =====
+let eId = null;
+
+function opMo(id) {
+  const ap = aps.find(a => a.id === id);
+  if (!ap) return;
+  
+  eId = id;
+  
+  document.getElementById('mN').value = ap.name;
+  document.getElementById('mColor').value = ap.color;
+  document.getElementById('mC1').value = ap.r1Ch || '';
+  document.getElementById('mV1').value = ap.r1Val || '';
+  document.getElementById('mC2').value = ap.r2Ch || '';
+  document.getElementById('mV2').value = ap.r2Val || '';
+  
+  document.getElementById('eMo').classList.add('show');
+}
+
+function clMo() {
+  document.getElementById('eMo').classList.remove('show');
+}
+
+function svMo() {
+  const ap = aps.find(a => a.id === eId);
+  if (!ap) return;
+  
+  ap.name = document.getElementById('mN').value || ap.name;
+  ap.color = document.getElementById('mColor').value;
+  ap.r1Ch = document.getElementById('mC1').value;
+  ap.r1Val = document.getElementById('mV1').value;
+  ap.r2Ch = document.getElementById('mC2').value;
+  ap.r2Val = document.getElementById('mV2').value;
+  
+  refAP(ap);
+  updL();
+  markModified();
+  if (showWaves) drawWaveStrengthOverlay();
+  reH();
+  clMo();
+  
+  toast('✅ Cambios guardados');
+}
+
+// ===== CONTEXT MENU =====
+function shCtx(x, y) {
+  const m = document.getElementById('ctx');
+  m.style.left = x + 'px';
+  m.style.top = y + 'px';
+  m.classList.add('show');
+}
+
+function hideCtx() {
+  document.getElementById('ctx').classList.remove('show');
+}
+
+document.addEventListener('click', hideCtx);
+
+function cE() {
+  hideCtx();
+  opMo(ctxId);
+}
+
+function cD() {
+  hideCtx();
+  const a = aps.find(a => a.id === ctxId);
+  if (a) {
+    addAP(a.x + 50, a.y + 50, a.color, {
+      ...a,
+      name: a.name + '_copia'
+    });
+  }
+}
+
+function cX() {
+  hideCtx();
+  rmAP(ctxId);
+}
+
+// ===== PNG EXPORT =====
+async function doPNG() {
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+
+  c.width = pImg.naturalWidth;
+  c.height = pImg.naturalHeight;
+
+  // v3.2: Dibujar TODAS las capas visibles (mismo orden que en pantalla)
+  ctx.drawImage(pImg, 0, 0);
+
+  // Zonas (si hay)
+  if (zCvs && zCvs.width > 0) {
+    ctx.drawImage(zCvs, 0, 0);
+  }
+
+  if (showHeat) {
+    ctx.drawImage(hCvs, 0, 0);
+  }
+
+  if (showWaves) {
+    ctx.drawImage(wCvs, 0, 0);
+  }
+
+  ctx.drawImage(sCvs, 0, 0);
+
+  // Draw APs (escala proporcional al plano, no al zoom)
+  const apR = Math.max(12, Math.min(c.width, c.height) * 0.012);
+  const fontSize = Math.max(11, apR * 0.8);
+
+  aps.forEach(ap => {
+    ctx.beginPath();
+    ctx.arc(ap.x, ap.y, apR, 0, Math.PI * 2);
+    ctx.fillStyle = ap.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = Math.max(2, apR * 0.2);
+    ctx.stroke();
+
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.textAlign = 'center';
+    const tw = ctx.measureText(ap.name).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(ap.x - tw/2 - 5, ap.y - apR - fontSize - 6, tw + 10, fontSize + 4);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(ap.name, ap.x, ap.y - apR - 6);
+    ctx.textAlign = 'start';
+  });
+
+  // v3.2: Dibujar leyenda en el PNG (esquina inferior derecha)
+  if (showHeat) {
+    const lW = 200, lH = 140, pad = 16;
+    const lX = c.width - lW - pad, lY = c.height - lH - pad;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.beginPath();
+    ctx.roundRect(lX, lY, lW, lH, 8);
+    ctx.fill();
+
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Cobertura WiFi (dBm)', lX + 12, lY + 20);
+
+    // Barra de gradiente
+    const grd = ctx.createLinearGradient(lX + 12, 0, lX + lW - 12, 0);
+    grd.addColorStop(0, '#00c853');
+    grd.addColorStop(0.25, '#76ff03');
+    grd.addColorStop(0.42, '#ffeb3b');
+    grd.addColorStop(0.6, '#ff9800');
+    grd.addColorStop(0.8, '#f44336');
+    grd.addColorStop(1, '#880e4f');
+    ctx.fillStyle = grd;
+    ctx.fillRect(lX + 12, lY + 28, lW - 24, 10);
+
+    ctx.font = '9px sans-serif';
+    ctx.fillStyle = '#ccc';
+    const labels = ['-30', '-50', '-67', '-80', '-90'];
+    labels.forEach((l, i) => {
+      ctx.fillText(l, lX + 12 + i * ((lW - 24) / (labels.length - 1)) - 8, lY + 52);
+    });
+
+    // Filas de leyenda
+    const rows = [
+      ['#00c853', 'Excelente', '> -50'],
+      ['#76ff03', 'Buena', '-50 a -67'],
+      ['#ffeb3b', 'Aceptable', '-67 a -75'],
+      ['#ff9800', 'Regular', '-75 a -85'],
+      ['#f44336', 'Debil', '< -85']
+    ];
+    rows.forEach((r, i) => {
+      const ry = lY + 62 + i * 15;
+      ctx.fillStyle = r[0];
+      ctx.fillRect(lX + 12, ry, 8, 8);
+      ctx.fillStyle = '#ddd';
+      ctx.font = '10px sans-serif';
+      ctx.fillText(r[1], lX + 26, ry + 8);
+      ctx.fillStyle = '#999';
+      ctx.font = '9px sans-serif';
+      ctx.fillText(r[2], lX + lW - 60, ry + 8);
+    });
+  }
+
+  // v3.2: Dibujar regla de escala en el PNG (esquina inferior izquierda)
+  if (pxM > 0) {
+    const rulerM = getRulerMeters();
+    const rulerPx = rulerM * pxM;
+    const rX = 20, rY = c.height - 30;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.beginPath();
+    ctx.roundRect(rX - 8, rY - 16, rulerPx + 16, 30, 6);
+    ctx.fill();
+
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(rX, rY); ctx.lineTo(rX + rulerPx, rY);
+    ctx.moveTo(rX, rY - 5); ctx.lineTo(rX, rY + 5);
+    ctx.moveTo(rX + rulerPx, rY - 5); ctx.lineTo(rX + rulerPx, rY + 5);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(rulerM + 'm', rX + rulerPx / 2, rY - 4);
+    ctx.textAlign = 'start';
+  }
+
+  // v3.2: Titulo del proyecto
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.beginPath();
+  ctx.roundRect(12, 12, 260, 28, 6);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillText('WiFi Planner Pro v3.2 — ' + (projectName || 'Sin titulo'), 20, 30);
+
+  const url = c.toDataURL('image/png');
+
+  if (!window.pywebview) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (projectName || 'wifi_heatmap') + '.png';
+    a.click();
+    toast('PNG descargado');
+    return;
+  }
+
+  try {
+    const result = await window.pywebview.api.export_png(url);
+    if (result.cancelled) return;
+    if (result.success) toast(`${result.filename} exportado`);
+    else if (result.error) toast(`Error: ${result.error}`);
+  } catch(e) {
+    toast(`Error: ${e}`);
+  }
+}
+
+// v3.2: Calcular metros razonables para la regla
+function getRulerMeters() {
+  const targets = [1, 2, 5, 10, 15, 20, 25, 50];
+  for (const m of targets) {
+    if (m * pxM >= 40 && m * pxM <= 300) return m;
+  }
+  return 10;
+}
+
+// ===== KEYBOARD =====
+// v3.2: Pan temporal con Space
+let _spaceHeld = false;
+let _modeBeforeSpace = null;
+
+document.addEventListener('keydown', (e) => {
+  // Ignorar atajos si hay un input/select activo
+  const tag = document.activeElement?.tagName;
+  const isInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selId && !document.getElementById('eMo').classList.contains('show') && !isInput) {
+    rmAP(selId);
+  }
+
+  if (e.key === 'Escape') {
+    clMo();
+    hideCtx();
+    desel();
+
+    if (mode !== 'select') {
+      setMode('select');
+    }
+
+    if (drawPoints.length > 0) {
+      drawPoints = [];
+      isDrawing = false;
+      clearDrawPreview();
+    }
+
+    if (zoneDrawPoints.length > 0) {
+      zoneDrawPoints = [];
+      isDrawingZone = false;
+      zCvs.style.pointerEvents = 'auto';
+      drawAllZones();
+      toast('Dibujo de zona cancelado');
+    }
+  }
+
+  if (e.key === 'Enter' && mode === 'draw' && drawTool === 'poly' && drawPoints.length >= 3) {
+    finishPolyStruct();
+    drawPoints = [];
+    clearDrawPreview();
+  }
+
+  if (e.key === 'Enter' && mode === 'zone' && zoneDrawPoints.length >= 3) {
+    createZoneFromPoints();
+  }
+
+  // Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+N
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveProject(); }
+  if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); saveProjectAs(); }
+  if (e.ctrlKey && e.key === 'o') { e.preventDefault(); loadProject(); }
+  if (e.ctrlKey && e.key === 'n') { e.preventDefault(); newProject(); }
+
+  // === v3.2: ATAJOS DE TECLADO ===
+  if (isInput || e.ctrlKey || e.altKey || e.metaKey) return;
+
+  // Space = Pan temporal (mantener presionado)
+  if (e.code === 'Space' && !_spaceHeld) {
+    e.preventDefault();
+    _spaceHeld = true;
+    _modeBeforeSpace = mode;
+    setMode('select');
+    cvs.style.cursor = 'grab';
+  }
+
+  // V = Modo seleccion/mover
+  if (e.key === 'v' || e.key === 'V') { setMode('select'); }
+
+  // D o R = Dibujar bloque (rectangulo)
+  if (e.key === 'd' || e.key === 'D' || e.key === 'r' || e.key === 'R') { setDrawTool('rect'); }
+
+  // W = Dibujar cuarto (4 paredes)
+  if (e.key === 'w' || e.key === 'W') { setDrawTool('wall'); }
+
+  // L = Dibujar pared/linea
+  if (e.key === 'l' || e.key === 'L') { setDrawTool('line'); }
+
+  // A = Agregar AP
+  if (e.key === 'a' || e.key === 'A') { addAPCenter(); }
+
+  // F = Fit/Ajustar a pantalla
+  if (e.key === 'f' || e.key === 'F') { fit(); }
+
+  // H = Toggle heatmap
+  if (e.key === 'h' || e.key === 'H') { togH(); }
+
+  // 1-7 = Tipos de estructura (durante modo dibujo)
+  const structKeys = { '1': 'wall', '2': 'brick', '3': 'drywall', '4': 'glass', '5': 'rack_metal', '6': 'metal', '7': 'elevator', '8': 'wood' };
+  if (structKeys[e.key]) {
+    setST(structKeys[e.key]);
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  // Soltar Space = volver al modo anterior
+  if (e.code === 'Space' && _spaceHeld) {
+    _spaceHeld = false;
+    cvs.style.cursor = '';
+    if (_modeBeforeSpace && _modeBeforeSpace !== 'select') {
+      setMode(_modeBeforeSpace);
+    }
+    _modeBeforeSpace = null;
+  }
+});
+
+// ===== TOAST =====
+function toast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  
+  clearTimeout(t._t);
+  t._t = setTimeout(() => {
+    t.classList.remove('show');
+  }, 2500);
+}
+
+// ===== HEATMAP (OPTIMIZED) =====
+function reH() {
+  if (!planLoaded || !showHeat || draggingAp) return;
+  
+  clearTimeout(hTimer);
+  hTimer = setTimeout(() => {
+    renderHeatmap();
+  }, 150);
+}
+
+// v3.2: Render ID para cancelar renders anteriores cuando llega uno nuevo
+let _renderGeneration = 0;
+let _lastRenderStep = 5; // Para calcular área en métricas de cobertura
+
+function renderHeatmap() {
+  if (aps.length === 0) {
+    hCtx.clearRect(0, 0, hCvs.width, hCvs.height);
+    document.getElementById('legend').classList.remove('show');
+    return;
+  }
+
+  document.getElementById('legend').classList.add('show');
+
+  const w = hCvs.width;
+  const h = hCvs.height;
+
+  const res = parseInt(document.getElementById('hrR').value) || 5;
+  const step = renderQuality === 'high' ? Math.max(3, res - 1) :
+                renderQuality === 'low' ? Math.min(14, res + 4) : res;
+  _lastRenderStep = step;
+
+  const gain = parseFloat(document.getElementById('ag').value);
+  const rx = parseFloat(document.getElementById('rs').value);
+
+  pathLossExponent = parseFloat(document.getElementById('ple').value) || 3.8;
+  maxEffectiveRange = parseFloat(document.getElementById('maxR').value) || 25;
+
+  // v3.2: Intentar Web Workers; fallback a renderizado síncrono
+  if (typeof Worker !== 'undefined') {
+    renderHeatmapParallel(w, h, step, gain, rx);
+  } else {
+    renderHeatmapSync(w, h, step, gain, rx);
+  }
+}
+
+function renderHeatmapParallel(w, h, step, gain, rx) {
+  const thisGen = ++_renderGeneration;
+
+  // Terminar workers previos
+  terminateHeatmapWorkers();
+
+  // Serializar datos para los workers (sin referencias al DOM)
+  const apData = aps.map(a => ({
+    x: a.x, y: a.y, height: a.height,
+    txPower2g: a.txPower2g, txPower5g: a.txPower5g,
+    antennaGain: a.antennaGain
+  }));
+  const structData = structs.map(s => ({
+    x: s.x, y: s.y, w: s.w, h: s.h,
+    db: s.db, tool: s.tool,
+    height: s.height, goesToCeiling: s.goesToCeiling
+  }));
+  const zoneData = zones.map(z => ({
+    id: z.id, name: z.name, polygon: z.polygon,
+    pathLossExponent: z.pathLossExponent,
+    ceilingHeight: z.ceilingHeight, visible: z.visible
+  }));
+
+  const sharedParams = {
+    w, h, step, aps: apData, structs: structData, zones: zoneData,
+    pxM, band, txPower2g, txPower5g, deviceHeight,
+    pathLossExponent, maxEffectiveRange, ceilingHeight,
+    rx, gain, perlinSeed: 42
+  };
+
+  // Dividir filas entre workers (alineado a step)
+  const totalRows = h;
+  const rowsPerWorker = Math.ceil(totalRows / (_numWorkers * step)) * step;
+  const chunks = [];
+  for (let yStart = 0; yStart < h; yStart += rowsPerWorker) {
+    const yEnd = Math.min(yStart + rowsPerWorker, h);
+    chunks.push({ yStart, yEnd });
+  }
+
+  const workerURL = getHeatmapWorkerURL();
+  const img = hCtx.createImageData(w, h);
+  const data = img.data;
+  let completed = 0;
+  const allZoneStats = {};
+  const allGlobalStats = { total: 0, good: 0, weak: 0, none: 0 };
+
+  chunks.forEach(chunk => {
+    const worker = new Worker(workerURL);
+    _heatmapWorkers.push(worker);
+
+    worker.onmessage = function(e) {
+      // Si hay un render más nuevo, ignorar este resultado
+      if (thisGen !== _renderGeneration) return;
+
+      const result = e.data;
+      const pd = result.pixelData;
+      const yOff = result.yStart;
+      const rowBytes = w * 4;
+
+      // Copiar los píxeles del worker al ImageData principal
+      for (let row = 0; row < (result.yEnd - result.yStart); row++) {
+        const srcOffset = row * rowBytes;
+        const dstOffset = (yOff + row) * rowBytes;
+        for (let i = 0; i < rowBytes; i++) {
+          data[dstOffset + i] = pd[srcOffset + i];
+        }
+      }
+
+      // Merge zone stats
+      if (result.zoneStats) {
+        for (const [key, val] of Object.entries(result.zoneStats)) {
+          if (!allZoneStats[key]) allZoneStats[key] = { name: val.name, total: 0, good: 0, weak: 0, none: 0 };
+          allZoneStats[key].total += val.total;
+          allZoneStats[key].good += val.good;
+          allZoneStats[key].weak += (val.weak || 0);
+          allZoneStats[key].none += (val.none || 0);
+        }
+      }
+
+      // Merge global stats
+      if (result.globalStats) {
+        allGlobalStats.total += result.globalStats.total;
+        allGlobalStats.good += result.globalStats.good;
+        allGlobalStats.weak += result.globalStats.weak;
+        allGlobalStats.none += result.globalStats.none;
+      }
+
+      completed++;
+      if (completed === chunks.length) {
+        if (thisGen === _renderGeneration) {
+          hCtx.putImageData(img, 0, 0);
+          updateZoneStats(allZoneStats, allGlobalStats);
+        }
+        terminateHeatmapWorkers();
+      }
+    };
+
+    worker.onerror = function(err) {
+      console.warn('Heatmap worker error, fallback to sync:', err.message);
+      terminateHeatmapWorkers();
+      if (thisGen === _renderGeneration) {
+        renderHeatmapSync(w, h, step, gain, rx);
+      }
+    };
+
+    worker.postMessage({ ...sharedParams, yStart: chunk.yStart, yEnd: chunk.yEnd });
+  });
+}
+
+// Fallback síncrono (mismo algoritmo v3.2, para navegadores sin Workers)
+function renderHeatmapSync(w, h, step, gain, rx) {
+  const img = hCtx.createImageData(w, h);
+  const data = img.data;
+  const zoneStats = {};
+  let globalTotal = 0, globalGood = 0, globalWeak = 0, globalNone = 0;
+
+  const freqMHz = band === 5 ? 5500 : 2412;
+  const PL_d0_real = fsplAtRef(freqMHz);
+
+  if (zones.length > 0) {
+    buildZoneGrid(w, h, step);
+  } else {
+    _zoneGridCache = null;
+  }
+
+  const perlinScale = 0.015;
+  const shadowSigma = 3.0;
+  const lambda = 0.3 / (freqMHz / 1000);
+
+  for (let y = 0; y < h; y += step) {
+    for (let x = 0; x < w; x += step) {
+      let maxRSSI = -120;
+      const zoneAtPoint = zones.length > 0 ? getZoneCached(x, y) : null;
+      const localPLE = zoneAtPoint?.pathLossExponent ?? pathLossExponent;
+      const localCeil = zoneAtPoint?.ceilingHeight ?? ceilingHeight;
+
+      for (let ai = 0; ai < aps.length; ai++) {
+        const ap = aps[ai];
+        const tx = band === 24 ? (ap.txPower2g !== undefined ? ap.txPower2g : txPower2g) :
+                                  (ap.txPower5g !== undefined ? ap.txPower5g : txPower5g);
+        const apGain = ap.antennaGain !== undefined ? ap.antennaGain : gain;
+
+        const dx = x - ap.x;
+        const dy = y - ap.y;
+        const distPx = Math.hypot(dx, dy);
+        const distM = distPx / pxM;
+
+        if (distM < 0.5) {
+          maxRSSI = Math.max(maxRSSI, tx + apGain - PL_d0_real);
+          continue;
+        }
+
+        const bandRangeFactor = band === 5 ? 0.65 : 1.0;
+        const effectiveRange = maxEffectiveRange * bandRangeFactor;
+        if (distM > effectiveRange * 1.3) continue;
+
+        let totalWallLoss = 0;
+        let wallsTraversed = 0;
+        let minEdgeClearanceM = Infinity;
+        const apHeightM = ap.height || (localCeil * 0.85);
+        const pointHeightM = deviceHeight;
+
+        for (const st of structs) {
+          const attenuation = Math.abs(st.db);
+
+          if (st.tool === 'rect' && st.w > 0 && st.h > 0) {
+            const rx2 = st.x + st.w, ry2 = st.y + st.h;
+            const sideTs = [];
+            let t;
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, rx2, st.y); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, rx2, st.y, rx2, ry2); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, ry2, rx2, ry2); if (t !== null) sideTs.push(t);
+            t = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, st.x, ry2); if (t !== null) sideTs.push(t);
+
+            if (sideTs.length > 0) {
+              sideTs.sort((a, b) => a - b);
+              const traversals = Math.ceil(sideTs.length / 2);
+              if (st.goesToCeiling) {
+                totalWallLoss += attenuation * traversals;
+                wallsTraversed += traversals;
+              } else {
+                const structHeightM = st.height || localCeil;
+                for (let ti = 0; ti < sideTs.length; ti += 2) {
+                  const lh = apHeightM + (pointHeightM - apHeightM) * sideTs[ti];
+                  if (lh > structHeightM) {
+                    minEdgeClearanceM = Math.min(minEdgeClearanceM, lh - structHeightM);
+                    totalWallLoss += attenuation * 0.15;
+                    wallsTraversed += 0.15;
+                  } else {
+                    totalWallLoss += attenuation;
+                    wallsTraversed += 1;
+                  }
+                }
+              }
+            } else {
+              const cx = st.x + st.w / 2, cy = st.y + st.h / 2;
+              const halfW = st.w / 2, halfH = st.h / 2;
+              const rayLen = distPx;
+              if (rayLen > 0) {
+                const ndx = dx / rayLen, ndy = dy / rayLen;
+                const tProj = Math.max(0, Math.min(rayLen, (cx - ap.x) * ndx + (cy - ap.y) * ndy));
+                const projX = ap.x + ndx * tProj, projY = ap.y + ndy * tProj;
+                const edgeDistPx = Math.hypot(Math.max(0, Math.abs(projX - cx) - halfW), Math.max(0, Math.abs(projY - cy) - halfH));
+                const edgeDistM = edgeDistPx / pxM;
+                if (edgeDistM < 2.0) minEdgeClearanceM = Math.min(minEdgeClearanceM, edgeDistM);
+              }
+            }
+          } else if (lineIntersectsSegment(ap.x, ap.y, x, y, st.x, st.y, st.x + (st.w||0), st.y + (st.h||0))) {
+            const tCross = lineIntersectionT(ap.x, ap.y, x, y, st.x, st.y, st.x + (st.w||0), st.y + (st.h||0));
+            if (st.goesToCeiling) {
+              totalWallLoss += attenuation;
+              wallsTraversed++;
+            } else {
+              const structHeightM = st.height || localCeil;
+              const lh = tCross === null ? (apHeightM + pointHeightM) / 2 : apHeightM + (pointHeightM - apHeightM) * tCross;
+              if (lh > structHeightM) {
+                minEdgeClearanceM = Math.min(minEdgeClearanceM, lh - structHeightM);
+                totalWallLoss += attenuation * 0.15;
+                wallsTraversed += 0.15;
+              } else {
+                totalWallLoss += attenuation;
+                wallsTraversed++;
+              }
+            }
+          }
+        }
+
+        const effectiveN = localPLE + (wallsTraversed * 0.3);
+        const pathLoss = distM <= 1.0 ? PL_d0_real : PL_d0_real + 10 * effectiveN * Math.log10(distM);
+        const shadowFading = perlinNoise(x * perlinScale + ai * 100, y * perlinScale) * shadowSigma;
+        // Rayleigh multipath fading: ±3 dB variation at high spatial frequency
+        const multipath = wallsTraversed > 0 ? perlinNoise(x * 0.08 + ai * 50, y * 0.08) * 3.0 : 0;
+        let rssi = tx + apGain - pathLoss - totalWallLoss + shadowFading + multipath;
+
+        if (minEdgeClearanceM < 2.0 && minEdgeClearanceM !== Infinity) {
+          const fresnelV = minEdgeClearanceM * Math.sqrt(2 / (lambda * Math.max(distM, 1)));
+          let dLoss;
+          if (fresnelV < -0.7) dLoss = 0;
+          else if (fresnelV < 0) dLoss = 6.0 - 9.0 * fresnelV;
+          else dLoss = 6.0 + 9.0 * fresnelV;
+          rssi -= Math.min(dLoss, 12);
+        }
+
+        rssi = Math.min(rssi, tx + apGain);
+        if (rssi < rx) rssi = -120;
+        if (rssi > maxRSSI) maxRSSI = rssi;
+      }
+
+      const color = rssiToColor(maxRSSI);
+
+      // Global coverage metrics
+      globalTotal++;
+      if (maxRSSI >= -67) globalGood++;
+      else if (maxRSSI >= -85) globalWeak++;
+      else globalNone++;
+
+      if (zoneAtPoint) {
+        const key = String(zoneAtPoint.id);
+        if (!zoneStats[key]) zoneStats[key] = { name: zoneAtPoint.name, total: 0, good: 0, weak: 0, none: 0 };
+        zoneStats[key].total++;
+        if (maxRSSI >= -67) zoneStats[key].good++;
+        else if (maxRSSI >= -85) zoneStats[key].weak++;
+        else zoneStats[key].none++;
+      }
+
+      for (let by = 0; by < step && y + by < h; by++) {
+        for (let bx = 0; bx < step && x + bx < w; bx++) {
+          const idx = ((y + by) * w + (x + bx)) * 4;
+          data[idx] = color[0];
+          data[idx + 1] = color[1];
+          data[idx + 2] = color[2];
+          data[idx + 3] = color[3];
+        }
+      }
+    }
+  }
+
+  hCtx.putImageData(img, 0, 0);
+  const globalStats = { total: globalTotal, good: globalGood, weak: globalWeak, none: globalNone };
+  updateZoneStats(zoneStats, globalStats);
+}
+
+// v3.2: Interpolación de color suave (gradiente continuo sin bandas visibles)
+const _rssiStops = [
+  { rssi: -40, color: [0, 200, 83, 240] },    // Excelente (verde brillante)
+  { rssi: -50, color: [0, 200, 83, 235] },    // Muy buena
+  { rssi: -60, color: [118, 255, 3, 220] },   // Buena (lima)
+  { rssi: -67, color: [255, 235, 59, 205] },  // Aceptable (amarillo)
+  { rssi: -75, color: [255, 152, 0, 188] },   // Regular (naranja)
+  { rssi: -85, color: [244, 67, 54, 165] },   // Mala (rojo)
+  { rssi: -90, color: [136, 14, 79, 118] },   // Muy mala (magenta)
+  { rssi: -100, color: [80, 0, 40, 55] }      // Inutilizable
+];
+
+function rssiToColor(rssi) {
+  if (rssi >= _rssiStops[0].rssi) return _rssiStops[0].color;
+  if (rssi <= _rssiStops[_rssiStops.length - 1].rssi) return _rssiStops[_rssiStops.length - 1].color;
+
+  for (let i = 0; i < _rssiStops.length - 1; i++) {
+    const upper = _rssiStops[i], lower = _rssiStops[i + 1];
+    if (rssi <= upper.rssi && rssi > lower.rssi) {
+      const t = (rssi - lower.rssi) / (upper.rssi - lower.rssi);
+      return [
+        Math.round(lower.color[0] + (upper.color[0] - lower.color[0]) * t),
+        Math.round(lower.color[1] + (upper.color[1] - lower.color[1]) * t),
+        Math.round(lower.color[2] + (upper.color[2] - lower.color[2]) * t),
+        Math.round(lower.color[3] + (upper.color[3] - lower.color[3]) * t)
+      ];
+    }
+  }
+  return _rssiStops[_rssiStops.length - 1].color;
+}
+
+function lineIntersectsSegment(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  if (Math.abs(denom) < 0.001) return false;
+  
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+  
+  return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
+}
+
+// Retorna t (0..1) donde el rayo AP->punto cruza el segmento, o null si no cruza
+function lineIntersectionT(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+  if (Math.abs(denom) < 0.001) return null;
+
+  const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
+  const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
+
+  if (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1) return ua;
+  return null;
+}
+
+// ===== WAVES =====
+let waveTime = 0;
+
+function startWaves() {
+  if (waveTimer) return;
+  animateWaves();
+}
+
+function stopWaves() {
+  if (waveTimer) {
+    cancelAnimationFrame(waveTimer);
+    waveTimer = null;
+  }
+  if (waveStrengthTimer) {
+    clearTimeout(waveStrengthTimer);
+    waveStrengthTimer = null;
+  }
+  wCtx.clearRect(0, 0, wCvs.width, wCvs.height);
+}
+
+function animateWaves() {
+  if (!showWaves) return;
+  drawWaveStrengthOverlay();
+  waveTime += 0.016 * waveSpeed;
+  
+  aps.forEach(ap => {
+    drawWaveRings(ap.x, ap.y, ap.color);
+  });
+  
+  waveTimer = requestAnimationFrame(animateWaves);
+}
+
+function drawWaveRings(x, y, color) {
+  const maxRadius = iconSz * 2.0;
+  const numRings = 3;
+  
+  for (let i = 0; i < numRings; i++) {
+    const offset = (waveTime + i * 0.9) % 3;
+    const radius = iconSz/2 + (maxRadius / numRings) * offset;
+    const alpha = Math.max(0, 1 - offset / 3);
+    
+    wCtx.strokeStyle = color;
+    wCtx.globalAlpha = alpha * waveOpacity * 0.7;
+    wCtx.lineWidth = 4;
+    
+    wCtx.beginPath();
+    wCtx.arc(x, y, radius, 0, Math.PI * 2);
+    wCtx.stroke();
+  }
+  
+  wCtx.globalAlpha = 1;
+}
+
+function startWaveStrengthOverlay() {
+  if (waveStrengthTimer) return;
+  const loop = () => {
+    if (!showWaves) return;
+    drawWaveStrengthOverlay();
+    waveStrengthTimer = setTimeout(loop, 300);
+  };
+  loop();
+}
+
+function stopWaveStrengthOverlay() {
+  if (waveStrengthTimer) {
+    clearTimeout(waveStrengthTimer);
+    waveStrengthTimer = null;
+  }
+}
+
+function drawWaveStrengthOverlay() {
+  if (!showWaves) return;
+  wCtx.clearRect(0, 0, wCvs.width, wCvs.height);
+  const rx = parseFloat(document.getElementById('rs').value) || -85;
+  aps.forEach(ap => {
+    const localTx = band === 24
+      ? (ap.txPower2g !== undefined ? ap.txPower2g : txPower2g)
+      : (ap.txPower5g !== undefined ? ap.txPower5g : txPower5g);
+    const localGain = ap.antennaGain !== undefined ? ap.antennaGain : antennaGain;
+    const envN = pathLossExponent || 3.8;
+    const bandPenalty = band === 5 ? 8.0 : 0.0;
+    const bandRangeFactor = band === 5 ? 0.65 : 1.0;
+    const rBase = maxEffectiveRange * bandRangeFactor;
+    const levels = [
+      {thr: -67, color: '#22c55e', width: 3},
+      {thr: -75, color: '#f59e0b', width: 2},
+      {thr: Math.max(rx, -85), color: '#ef4444', width: 2}
+    ];
+    levels.forEach((lvl) => {
+      const margin = localTx + localGain - 40 - bandPenalty - Math.abs(lvl.thr);
+      if (margin <= 0) return;
+      const radiusM = Math.max(0, Math.pow(10, margin / (10 * envN)));
+      const radiusPx = Math.min(radiusM * pxM, rBase * pxM);
+      if (radiusPx < 2) return;
+      wCtx.save();
+      wCtx.strokeStyle = lvl.color;
+      wCtx.lineWidth = lvl.width;
+      wCtx.globalAlpha = 0.28;
+      wCtx.setLineDash([6, 4]);
+      wCtx.beginPath();
+      wCtx.arc(ap.x, ap.y, radiusPx, 0, Math.PI * 2);
+      wCtx.stroke();
+      wCtx.restore();
+    });
+  });
+}
+
+// ===== ZONES SYSTEM (v3.1) =====
+
+// Iniciar dibujo de zona
+function startDrawZone() {
+  if (!planLoaded) {
+    toast('⚠️ Carga un plano primero');
+    return;
+  }
+  
+  isDrawingZone = true;
+  zoneDrawPoints = [];
+  setMode('zone');
+  zCvs.style.pointerEvents = 'auto';
+  
+  toast('🗺️ Click en vértices de la zona, Enter para terminar');
+}
+
+// Crear zona desde puntos dibujados
+function createZoneFromPoints() {
+  if (zoneDrawPoints.length < 3) {
+    toast('⚠️ Necesitas al menos 3 puntos');
+    return;
+  }
+  
+  const zone = {
+    id: nZone++,
+    name: `Zona ${nZone - 1}`,
+    polygon: [...zoneDrawPoints],
+    type: 'almacen_textil_peru',
+    ceilingHeight: 5.5,
+    pathLossExponent: 3.8,
+    color: `hsl(${(nZone * 60) % 360}, 70%, 50%)`,
+    visible: true
+  };
+  
+  zones.push(zone);
+  isDrawingZone = false;
+  zoneDrawPoints = [];
+  mode = 'select';
+  zCvs.style.pointerEvents = 'auto';
+  
+  updateZonesList();
+  selectZone(zone.id);
+  drawAllZones();
+  markModified();
+  updateZoneStats();
+  
+  toast(`✅ ${zone.name} creada`);
+}
+
+// Actualizar lista de zonas en UI
+function updateZonesList() {
+  const list = document.getElementById('zonesList');
+  
+  if (zones.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:20px;color:var(--t3);font-size:11px;">
+        Sin zonas definidas<br>
+        Dibuja una zona para empezar
+      </div>
+    `;
+    return;
+  }
+  
+  list.innerHTML = zones.map(z => `
+    <div class="zone-item ${currentZoneId === z.id ? 'selected' : ''}" 
+         onclick="selectZone(${z.id})"
+         style="padding:10px;margin-bottom:6px;background:var(--p2);border:1px solid ${currentZoneId === z.id ? z.color : 'var(--bd)'};border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:10px;">
+      <div style="width:20px;height:20px;border-radius:4px;background:${z.color};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:12px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${z.name}
+        </div>
+        <div style="font-size:10px;color:var(--t3);">
+          ${z.polygon.length} vértices • Techo ${z.ceilingHeight}m
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Seleccionar zona para editar
+function selectZone(zoneId) {
+  const zone = zones.find(z => z.id === zoneId);
+  if (!zone) return;
+  
+  currentZoneId = zoneId;
+  
+  // Actualizar UI
+  document.getElementById('zoneConfigPanel').style.display = 'block';
+  document.getElementById('zoneConfigEmpty').style.display = 'none';
+  
+  // Cargar valores de la zona
+  document.getElementById('zoneNameInput').value = zone.name;
+  document.getElementById('zoneEnvType').value = zone.type;
+  document.getElementById('zoneCeilingH').value = zone.ceilingHeight;
+  document.getElementById('zoneCeilingv').textContent = zone.ceilingHeight;
+  document.getElementById('zonePle').value = zone.pathLossExponent;
+  document.getElementById('zonePlev').textContent = zone.pathLossExponent;
+  document.getElementById('zoneColorInput').value = zone.color;
+  
+  updateZonesList();
+}
+
+// Actualizar configuración de ambiente de zona
+function updateZoneEnv() {
+  if (!currentZoneId) return;
+  
+  const zone = zones.find(z => z.id === currentZoneId);
+  if (!zone) return;
+  
+  const envType = document.getElementById('zoneEnvType').value;
+  
+  const envPresets = {
+    'almacen_textil_peru': { n: 3.8, ceiling: 5.5 },
+    'oficina_peru': { n: 3.2, ceiling: 2.8 },
+    'retail_peru': { n: 3.5, ceiling: 3.5 },
+    'office': { n: 3.0, ceiling: 2.8 },
+    'warehouse': { n: 4.0, ceiling: 6.0 },
+    'industrial': { n: 4.5, ceiling: 7.0 }
+  };
+  
+  const preset = envPresets[envType];
+  if (preset && envType !== 'custom') {
+    document.getElementById('zoneCeilingH').value = preset.ceiling;
+    document.getElementById('zoneCeilingv').textContent = preset.ceiling;
+    document.getElementById('zonePle').value = preset.n;
+    document.getElementById('zonePlev').textContent = preset.n;
+  }
+}
+
+// Guardar configuración de zona actual
+function saveZoneConfig() {
+  if (!currentZoneId) return;
+  
+  const zone = zones.find(z => z.id === currentZoneId);
+  if (!zone) return;
+  
+  zone.name = document.getElementById('zoneNameInput').value || zone.name;
+  zone.type = document.getElementById('zoneEnvType').value;
+  zone.ceilingHeight = parseFloat(document.getElementById('zoneCeilingH').value);
+  zone.pathLossExponent = parseFloat(document.getElementById('zonePle').value);
+  zone.color = document.getElementById('zoneColorInput').value;
+  
+  updateZonesList();
+  drawAllZones();
+  markModified();
+  updateZoneStats();
+  reH();  // Recalcular heatmap con nuevos parámetros
+  
+  toast(`✅ ${zone.name} actualizada`);
+}
+
+// Eliminar zona actual
+function deleteCurrentZone() {
+  if (!currentZoneId) return;
+  
+  const zone = zones.find(z => z.id === currentZoneId);
+  if (!zone) return;
+  
+  if (!confirm(`¿Eliminar "${zone.name}"?`)) return;
+  
+  zones = zones.filter(z => z.id !== currentZoneId);
+  currentZoneId = null;
+  
+  document.getElementById('zoneConfigPanel').style.display = 'none';
+  document.getElementById('zoneConfigEmpty').style.display = 'block';
+  
+  updateZonesList();
+  drawAllZones();
+  markModified();
+  updateZoneStats();
+  reH();
+  
+  toast('🗑️ Zona eliminada');
+}
+
+// Dibujar todas las zonas en el canvas
+function drawAllZones() {
+  const w = zCvs.width;
+  const h = zCvs.height;
+  
+  zCtx.clearRect(0, 0, w, h);
+  
+  if (zones.length === 0 && !isDrawingZone) return;
+  
+  // Dibujar zonas existentes
+  zones.forEach(zone => {
+    if (!zone.visible) return;
+    
+    zCtx.save();
+    
+    // Rellenar zona con color semi-transparente
+    zCtx.fillStyle = zone.color;
+    zCtx.globalAlpha = zoneOpacity;
+    zCtx.beginPath();
+    zone.polygon.forEach((p, i) => {
+      if (i === 0) zCtx.moveTo(p.x, p.y);
+      else zCtx.lineTo(p.x, p.y);
+    });
+    zCtx.closePath();
+    zCtx.fill();
+    
+    // Borde de zona
+    if (showZoneBorders) {
+      zCtx.globalAlpha = 0.8;
+      zCtx.strokeStyle = zone.color;
+      zCtx.lineWidth = 2;
+      zCtx.setLineDash([5, 3]);
+      zCtx.stroke();
+      zCtx.setLineDash([]);
+    }
+    
+    // Label de zona
+    if (showZoneLabels) {
+      const center = getPolygonCenter(zone.polygon);
+      zCtx.globalAlpha = 1;
+      zCtx.fillStyle = zone.color;
+      zCtx.font = 'bold 14px Inter';
+      zCtx.textAlign = 'center';
+      zCtx.textBaseline = 'middle';
+      
+      // Sombra para mejor legibilidad
+      zCtx.shadowColor = 'rgba(0,0,0,0.8)';
+      zCtx.shadowBlur = 4;
+      zCtx.fillText(zone.name, center.x, center.y);
+      zCtx.shadowBlur = 0;
+    }
+    
+    zCtx.restore();
+  });
+  
+  // Dibujar zona en progreso
+  if (isDrawingZone && zoneDrawPoints.length > 0) {
+    zCtx.save();
+    zCtx.strokeStyle = '#3b82f6';
+    zCtx.lineWidth = 2;
+    zCtx.setLineDash([5, 3]);
+    
+    zCtx.beginPath();
+    zoneDrawPoints.forEach((p, i) => {
+      if (i === 0) zCtx.moveTo(p.x, p.y);
+      else zCtx.lineTo(p.x, p.y);
+    });
+    zCtx.stroke();
+    zCtx.setLineDash([]);
+    
+    // Puntos
+    zoneDrawPoints.forEach(p => {
+      zCtx.fillStyle = '#3b82f6';
+      zCtx.beginPath();
+      zCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      zCtx.fill();
+    });
+
+    const last = zoneDrawPoints[zoneDrawPoints.length - 1];
+    zCtx.fillStyle = '#93c5fd';
+    zCtx.font = '12px Inter';
+    zCtx.fillText(`Zona en creación: ${zoneDrawPoints.length} puntos (Enter para cerrar)`, last.x + 10, last.y - 10);
+    
+    zCtx.restore();
+  }
+}
+
+// Calcular centro de polígono (centroide)
+function getPolygonCenter(polygon) {
+  let sumX = 0, sumY = 0;
+  polygon.forEach(p => {
+    sumX += p.x;
+    sumY += p.y;
+  });
+  return {
+    x: sumX / polygon.length,
+    y: sumY / polygon.length
+  };
+}
+
+// Point-in-polygon test (Ray casting algorithm)
+function isPointInPolygon(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y;
+    const xj = polygon[j].x, yj = polygon[j].y;
+    
+    const intersect = ((yi > point.y) !== (yj > point.y))
+        && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+    
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+// Obtener zona en punto dado
+function getZoneAtPoint(x, y) {
+  // Buscar de última a primera (zonas más recientes tienen prioridad)
+  for (let i = zones.length - 1; i >= 0; i--) {
+    const zone = zones[i];
+    if (zone.visible && isPointInPolygon({x, y}, zone.polygon)) {
+      return zone;
+    }
+  }
+  return null;
+}
+
+// Toggle visualización de bordes
+function toggleZoneBorders(show) {
+  showZoneBorders = show;
+  drawAllZones();
+}
+
+// Toggle visualización de labels
+function toggleZoneLabels(show) {
+  showZoneLabels = show;
+  drawAllZones();
+}
+
+// Actualizar opacidad de zonas
+function updateZoneOpacity(opacity) {
+  zoneOpacity = opacity;
+  drawAllZones();
+  markModified();
+}
+
+function updateZoneStats(zoneStats = null, globalStats = null) {
+  const statsEl = document.getElementById('zoneStats');
+  if (!statsEl) return;
+
+  // Calcular métricas de cobertura global
+  let globalLine = '';
+  if (globalStats && globalStats.total > 0) {
+    const gPct = Math.round((globalStats.good / globalStats.total) * 100);
+    const wPct = Math.round((globalStats.weak / globalStats.total) * 100);
+    const nPct = 100 - gPct - wPct;
+    // Calcular área en m² si tenemos escala
+    const pixelsPerSample = _lastRenderStep * _lastRenderStep;
+    const m2PerPixel = pxM > 0 ? 1 / (pxM * pxM) : 0;
+    const totalAreaM2 = globalStats.total * pixelsPerSample * m2PerPixel;
+    const goodAreaM2 = globalStats.good * pixelsPerSample * m2PerPixel;
+    const weakAreaM2 = globalStats.weak * pixelsPerSample * m2PerPixel;
+    const noneAreaM2 = globalStats.none * pixelsPerSample * m2PerPixel;
+    globalLine = `<div style="margin:4px 0;padding:6px;background:var(--p3);border-radius:4px;font-size:11px">` +
+      `<b>Cobertura global</b> (${totalAreaM2.toFixed(0)} m²)<br>` +
+      `<span style="color:#4CAF50">Buena (>= -67): ${gPct}%</span> (${goodAreaM2.toFixed(0)} m²)<br>` +
+      `<span style="color:#FF9800">Débil (-67 a -85): ${wPct}%</span> (${weakAreaM2.toFixed(0)} m²)<br>` +
+      `<span style="color:#F44336">Sin cobertura (< -85): ${nPct}%</span> (${noneAreaM2.toFixed(0)} m²)</div>`;
+  }
+
+  if (!zones.length) {
+    statsEl.innerHTML = globalLine + `<span style="color:var(--t3)">Techo ${ceilingHeight.toFixed(1)}m, AP ${apMountHeight.toFixed(1)}m, n=${pathLossExponent.toFixed(1)}</span>`;
+    return;
+  }
+  const precedence = `Regla: punto dentro de zona => usa parámetros de zona; fuera => usa global (techo ${ceilingHeight.toFixed(1)}m, AP ${apMountHeight.toFixed(1)}m, n=${pathLossExponent.toFixed(1)})`;
+  const lines = zones.map(z => {
+    const st = zoneStats ? zoneStats[String(z.id)] : null;
+    if (!st || st.total === 0) return `${z.name}: sin muestras`;
+    const gPct = Math.round((st.good / st.total) * 100);
+    const wPct = Math.round(((st.weak || 0) / st.total) * 100);
+    const nPct = 100 - gPct - wPct;
+    return `${z.name}: <span style="color:#4CAF50">${gPct}%</span> buena, <span style="color:#FF9800">${wPct}%</span> débil, <span style="color:#F44336">${nPct}%</span> sin cobertura`;
+  });
+  statsEl.innerHTML = globalLine + `${lines.join('<br>')}<br><span style="color:var(--t3)">${precedence}</span>`;
+}
+
+// ===== VALIDACIÓN OSIPTEL (v3.1) =====
+function validateOSIPTEL() {
+  const tx24 = parseFloat(document.getElementById('tx24').value);
+  const tx5 = parseFloat(document.getElementById('tx5').value);
+  const gain = parseFloat(document.getElementById('ag').value);
+  
+  const eirp24 = tx24 + gain;
+  const eirp5 = tx5 + gain;
+  
+  const warn24 = document.getElementById('tx24warning');
+  const warn5 = document.getElementById('tx5warning');
+  
+  // 2.4 GHz: Límite 30 dBm EIRP
+  if (eirp24 > 30) {
+    warn24.style.display = 'block';
+    warn24.textContent = `⚠️ EIRP=${eirp24.toFixed(1)}dBm excede límite Perú (30dBm)`;
+  } else {
+    warn24.style.display = 'none';
+  }
+  
+  // 5 GHz UNII-1/2: Límite 23 dBm EIRP
+  if (eirp5 > 23 && eirp5 <= 30) {
+    warn5.style.display = 'block';
+    warn5.textContent = `⚠️ EIRP=${eirp5.toFixed(1)}dBm excede UNII-1/2 (23dBm). OK para UNII-2e/3`;
+    warn5.style.color = '#f59e0b';  // Warning naranja
+  } else if (eirp5 > 30) {
+    warn5.style.display = 'block';
+    warn5.textContent = `⚠️ EIRP=${eirp5.toFixed(1)}dBm excede límite máximo (30dBm)`;
+    warn5.style.color = '#ef4444';  // Error rojo
+  } else {
+    warn5.style.display = 'none';
+  }
+}
+
+// ===== INIT =====
+init();
+</script>
+
+</body>
+</html>
