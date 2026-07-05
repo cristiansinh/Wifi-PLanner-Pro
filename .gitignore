@@ -7,6 +7,8 @@ dist/
 build/
 *.spec
 *.egg
+*.pyc
+*.pyo
 
 # IDE
 .vscode/
@@ -29,3 +31,31 @@ Desktop.ini
 
 # Compiled executables
 *.exe
+
+# ── Seguridad ────────────────────────────────────────────
+# Archivos de entorno y secretos (NUNCA subir al repo)
+.env
+.env.*
+*.env
+.env.local
+.env.production
+.env.development
+
+# Archivos de configuración con posibles credenciales
+secrets.json
+secrets.yaml
+secrets.yml
+credentials.json
+config.local.json
+
+# Logs de la aplicación
+*.log
+logs/
+
+# Archivos de configuración generados en runtime
+# (WiFiPlannerPro los guarda en %LOCALAPPDATA%, no aquí,
+#  pero se ignoran por precaución)
+config.json
+
+# Artefactos numéricos (e.g. archivos "4.0.0" creados por pip)
+[0-9]*.[0-9]*.[0-9]*
