@@ -5,29 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WiFi Planner Pro v3.3</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #08090d;
-  --p1: #0e1018;
-  --p2: #14161f;
-  --p3: #1a1d28;
-  --bd: #252838;
-  --bd2: #333750;
-  --t1: #e8ecf4;
-  --t2: #9aa0b8;
-  --t3: #5c6280;
-  --ac: #3b82f6;
-  --ac2: #60a5fa;
-  --g1: #22c55e;
+  /* Base surfaces - Fluent Dark */
+  --bg: #070810;
+  --p1: rgba(12, 14, 22, 0.92);
+  --p2: rgba(18, 20, 32, 0.85);
+  --p3: rgba(26, 28, 44, 0.8);
+  --p1s: #0c0e16;
+  --p2s: #121420;
+  --p3s: #1a1c2c;
+
+  /* Borders */
+  --bd: rgba(80, 90, 140, 0.25);
+  --bd2: rgba(100, 115, 170, 0.35);
+  --bd-glow: rgba(59, 130, 246, 0.4);
+
+  /* Text */
+  --t1: #edf0fb;
+  --t2: #9aa4c8;
+  --t3: #5a6390;
+
+  /* Accent - Electric Blue */
+  --ac: hsl(217, 91%, 60%);
+  --ac2: hsl(213, 97%, 72%);
+  --ac-glow: hsla(217, 91%, 60%, 0.35);
+  --ac-glow2: hsla(217, 91%, 60%, 0.12);
+
+  /* Status colors */
+  --g1: #22d966;
   --g2: #16a34a;
-  --r1: #ef4444;
+  --r1: #f04040;
   --o1: #f59e0b;
   --y1: #eab308;
-  --purple: #a855f7;
-  --cyan: #06b6d4;
-  --mono: 'JetBrains Mono', monospace;
-  --sans: 'Inter', system-ui, sans-serif;
+  --purple: #b066ff;
+  --cyan: #06d6f0;
+
+  /* Glass / Acrylic */
+  --glass: rgba(14, 16, 28, 0.72);
+  --glass-bd: rgba(100, 120, 200, 0.18);
+  --glass-blur: 20px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.55);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.75);
+
+  /* Fonts */
+  --mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+  --sans: 'Outfit', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+
+  /* Transitions */
+  --tr: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,30 +71,37 @@
 body {
   font-family: var(--sans);
   background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 20% 0%, hsla(240,50%,12%,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 10%, hsla(217,70%,10%,0.6) 0%, transparent 50%);
   color: var(--t1);
   overflow: hidden;
   height: 100vh;
   user-select: none;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
 }
 
 .tb {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 52px;
-  background: var(--p1);
-  border-bottom: 1px solid var(--bd);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  border-bottom: 1px solid var(--glass-bd);
   display: flex;
   align-items: center;
-  padding: 0 12px;
+  padding: 0 14px;
   z-index: 1000;
-  gap: 6px;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), var(--shadow-sm);
 }
 .tb::-webkit-scrollbar { height: 3px; }
-.tb::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 3px; }
+.tb::-webkit-scrollbar-thumb { background: var(--bd2); border-radius: 3px; }
 
 .loading-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -75,7 +118,7 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .scale-ruler {
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
   background: rgba(0,0,0,0.75); border-radius: 6px; padding: 4px 12px;
   display: flex; align-items: center; gap: 8px; z-index: 500;
   pointer-events: none;
@@ -87,31 +130,39 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-right: 14px;
-  border-right: 1px solid var(--bd);
-  margin-right: 8px;
+  padding-right: 16px;
+  border-right: 1px solid var(--glass-bd);
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .tb-brand svg {
-  width: 24px;
-  height: 24px;
-  fill: var(--ac);
+  width: 22px;
+  height: 22px;
+  fill: var(--ac2);
+  filter: drop-shadow(0 0 6px var(--ac-glow));
 }
 
 .tb-brand b {
   font-size: 14px;
+  font-weight: 700;
   color: #fff;
-  letter-spacing: -.5px;
+  letter-spacing: -.3px;
+  background: linear-gradient(135deg, #fff 40%, var(--ac2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .tb-brand small {
-  font-size: 8px;
-  color: var(--t3);
+  font-size: 7px;
+  color: #fff;
   font-weight: 700;
-  background: var(--purple);
-  padding: 2px 6px;
-  border-radius: 3px;
-  margin-left: 6px;
+  background: linear-gradient(135deg, var(--purple), var(--ac));
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-left: 4px;
+  letter-spacing: 0.5px;
 }
 
 .btn {
@@ -119,45 +170,61 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 13px;
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   border: 1px solid var(--bd);
-  background: var(--p2);
+  background: rgba(18, 20, 36, 0.7);
   color: var(--t2);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .12s;
+  transition: background var(--tr), color var(--tr), border-color var(--tr), transform var(--tr), box-shadow var(--tr);
   font-family: var(--sans);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .btn:hover {
-  background: var(--p3);
+  background: rgba(30, 34, 56, 0.85);
   color: #fff;
   border-color: var(--bd2);
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .btn.on {
-  background: var(--ac);
+  background: linear-gradient(135deg, var(--ac), hsl(230, 85%, 52%));
   border-color: var(--ac);
   color: #fff;
+  box-shadow: 0 0 0 1px var(--ac-glow), 0 4px 14px var(--ac-glow);
 }
 
 .btn.grn {
-  border-color: #1a3a1a;
+  border-color: rgba(34, 217, 102, 0.3);
   color: var(--g1);
 }
 
 .btn.grn:hover {
   background: var(--g2);
   color: #fff;
+  border-color: var(--g1);
+  box-shadow: 0 0 0 1px rgba(34,217,102,0.3), 0 4px 12px rgba(34,217,102,0.2);
 }
 
 .btn:disabled {
-  opacity: .4;
+  opacity: .35;
   cursor: not-allowed;
   transform: none !important;
+  box-shadow: none !important;
 }
 
 .sep {
@@ -197,14 +264,17 @@ body {
   position: fixed;
   top: 52px;
   left: 0;
-  bottom: 0;
+  bottom: 28px;
   width: 320px;
-  background: var(--p1);
-  border-right: 1px solid var(--bd);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border-right: 1px solid var(--glass-bd);
   z-index: 900;
   display: flex;
   flex-direction: column;
-  transition: transform .3s cubic-bezier(.4, 0, .2, 1);
+  transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+  box-shadow: 4px 0 32px rgba(0,0,0,0.4);
 }
 
 .panel.hide {
@@ -213,33 +283,35 @@ body {
 
 .tabs {
   display: flex;
-  border-bottom: 1px solid var(--bd);
-  background: var(--p2);
+  border-bottom: 1px solid var(--glass-bd);
+  background: rgba(8, 10, 18, 0.6);
+  flex-shrink: 0;
 }
 
 .tab {
   flex: 1;
-  padding: 11px 4px;
+  padding: 10px 3px;
   text-align: center;
   font-size: 9px;
   font-weight: 700;
   color: var(--t3);
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  transition: all .15s;
+  border-bottom: 2px solid transparent;
+  transition: color var(--tr), background var(--tr), border-color var(--tr);
   letter-spacing: .5px;
   text-transform: uppercase;
 }
 
 .tab:hover {
   color: var(--t2);
-  background: rgba(255, 255, 255, .03);
+  background: rgba(255, 255, 255, .04);
 }
 
 .tab.on {
   color: var(--ac2);
   border-bottom-color: var(--ac);
-  background: var(--p1);
+  background: rgba(59,130,246,0.06);
+  text-shadow: 0 0 10px var(--ac-glow);
 }
 
 .tc {
@@ -276,9 +348,15 @@ body {
   top: 52px;
   left: 320px;
   right: 0;
-  bottom: 0;
+  bottom: 28px;
   overflow: hidden;
-  background: #060710;
+  background-color: #050610;
+  background-image:
+    linear-gradient(rgba(40,50,100,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40,50,100,0.12) 1px, transparent 1px),
+    linear-gradient(rgba(40,50,100,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40,50,100,0.04) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
   cursor: grab;
 }
 
@@ -311,6 +389,7 @@ body {
 #structCvs { z-index: 4; }
 #zonesCvs { z-index: 3; }
 
+/* ===== WELCOME HUB ===== */
 .welcome {
   position: absolute;
   top: 50%;
@@ -319,36 +398,122 @@ body {
   text-align: center;
   z-index: 5;
   pointer-events: none;
-  max-width: 500px;
+  width: 600px;
+  max-width: 90vw;
 }
 
-.welcome svg {
-  width: 80px;
-  height: 80px;
-  fill: var(--bd);
-  margin-bottom: 24px;
-  opacity: .5;
+.welcome-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--ac), var(--purple));
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px var(--ac-glow), 0 8px 24px rgba(0,0,0,0.5);
+  animation: float 4s ease-in-out infinite;
+}
+
+.welcome-icon svg {
+  width: 38px;
+  height: 38px;
+  fill: #fff;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
 }
 
 .welcome h2 {
-  font-size: 22px;
-  color: var(--t3);
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #fff 50%, var(--ac2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .welcome p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--t3);
-  line-height: 1.8;
+  line-height: 1.7;
+  margin-bottom: 32px;
 }
 
-.welcome .btn {
+.welcome-cards {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
   pointer-events: auto;
-  margin-top: 18px;
-  font-size: 12px;
-  padding: 10px 26px;
+  margin-bottom: 24px;
 }
+
+.welcome-card {
+  flex: 1;
+  max-width: 170px;
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-bd);
+  border-radius: var(--r-lg);
+  padding: 20px 14px;
+  cursor: pointer;
+  transition: all var(--tr);
+  pointer-events: auto;
+  box-shadow: var(--shadow-md);
+}
+
+.welcome-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ac);
+  box-shadow: 0 0 0 1px var(--ac-glow), var(--shadow-lg);
+  background: rgba(30,40,70,0.6);
+}
+
+.welcome-card .wc-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.welcome-card .wc-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t1);
+  margin-bottom: 4px;
+}
+
+.welcome-card .wc-sub {
+  font-size: 10px;
+  color: var(--t3);
+  line-height: 1.4;
+}
+
+.welcome-drop {
+  border: 2px dashed var(--bd2);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  pointer-events: auto;
+  transition: border-color var(--tr), background var(--tr);
+  cursor: default;
+}
+
+.welcome-drop.dragover {
+  border-color: var(--ac);
+  background: var(--ac-glow2);
+}
+
+.welcome-drop-label {
+  font-size: 11px;
+  color: var(--t3);
+}
+
 
 .mk {
   position: absolute;
@@ -485,20 +650,21 @@ body {
 .sett input[type=number],
 .sett select {
   width: 100%;
-  padding: 7px 10px;
-  background: var(--p3);
+  padding: 8px 11px;
+  background: rgba(10, 12, 22, 0.6);
   border: 1px solid var(--bd);
-  border-radius: 7px;
+  border-radius: var(--r-sm);
   color: var(--t1);
   font-size: 11px;
   font-family: var(--sans);
   outline: none;
-  transition: border-color .15s;
+  transition: border-color var(--tr), box-shadow var(--tr);
 }
 
 .sett input:focus,
 .sett select:focus {
   border-color: var(--ac);
+  box-shadow: 0 0 0 2px var(--ac-glow2);
 }
 
 .fr {
@@ -509,16 +675,18 @@ body {
 .fr .sett { flex: 1; }
 
 .cb {
-  background: var(--p2);
-  border: 1px solid var(--bd);
-  border-radius: 9px;
+  background: rgba(20, 22, 40, 0.5);
+  border: 1px solid var(--glass-bd);
+  border-radius: var(--r-md);
   padding: 14px;
   margin-bottom: 10px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .cb .ct {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--t1);
   margin-bottom: 6px;
   display: flex;
@@ -538,34 +706,46 @@ body {
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: var(--p2);
-  border-radius: 8px;
-  margin-bottom: 6px;
+  background: rgba(16, 18, 34, 0.65);
+  border-radius: var(--r-md);
+  margin-bottom: 8px;
   cursor: grab;
-  border: 1px solid var(--bd);
-  transition: all .14s;
+  border: 1px solid var(--glass-bd);
+  transition: all var(--tr);
+  position: relative;
+  overflow: hidden;
+}
+
+.tpl::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), transparent);
+  pointer-events: none;
 }
 
 .tpl:hover {
   border-color: var(--ac);
-  transform: translateX(3px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .3);
+  transform: translateX(4px);
+  box-shadow: -4px 0 12px var(--ac-glow2), 0 4px 12px rgba(0,0,0,0.3);
+  background: rgba(30, 40, 70, 0.5);
 }
 
 .tpl:active {
   cursor: grabbing;
-  transform: scale(.98);
+  transform: scale(.97);
 }
 
 .tpl .ic {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   position: relative;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 
 .tpl .ic svg {
@@ -582,7 +762,7 @@ body {
 
 .tpl .inf .nm {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--t1);
 }
 
@@ -596,32 +776,34 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 11px;
-  background: var(--p2);
-  border-radius: 7px;
+  padding: 9px 12px;
+  background: rgba(16, 18, 34, 0.55);
+  border-radius: var(--r-sm);
   margin-bottom: 5px;
   cursor: pointer;
-  border: 1px solid var(--bd);
-  transition: all .14s;
+  border: 1px solid var(--glass-bd);
+  transition: all var(--tr);
   font-size: 11px;
 }
 
 .st:hover {
   border-color: var(--ac);
   transform: translateX(3px);
+  background: rgba(26, 32, 58, 0.7);
 }
 
 .st.on {
   border-color: var(--o1);
-  background: #1a1800;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, .2);
+  background: rgba(30, 24, 6, 0.6);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, .25), inset 0 0 12px rgba(245,158,11,0.06);
 }
 
 .st .dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
   flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
 }
 
 .st .db {
@@ -630,6 +812,7 @@ body {
   font-size: 9px;
   margin-left: auto;
   font-weight: 700;
+  opacity: 0.85;
 }
 
 .tool-palette {
@@ -640,25 +823,28 @@ body {
 }
 
 .tool-btn {
-  padding: 10px;
-  background: var(--p2);
-  border: 1px solid var(--bd);
-  border-radius: 7px;
+  padding: 10px 8px;
+  background: rgba(16, 18, 34, 0.55);
+  border: 1px solid var(--glass-bd);
+  border-radius: var(--r-sm);
   cursor: pointer;
-  transition: all .12s;
+  transition: all var(--tr);
   text-align: center;
 }
 
 .tool-btn:hover {
   border-color: var(--ac);
-  background: var(--p3);
+  background: rgba(26, 32, 58, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .tool-btn.on {
   border-color: var(--ac);
-  background: var(--ac);
+  background: linear-gradient(135deg, var(--ac), hsl(230,85%,50%));
   color: #fff;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, .2);
+  box-shadow: 0 0 0 1px var(--ac-glow), 0 4px 16px var(--ac-glow);
+  transform: translateY(-1px);
 }
 
 .tool-btn .ic {
@@ -668,7 +854,7 @@ body {
 
 .tool-btn .nm {
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .5px;
 }
@@ -678,13 +864,13 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  margin: 0 14px 5px;
-  background: var(--p2);
-  border-radius: 6px;
+  margin: 0 12px 4px;
+  background: rgba(16, 18, 34, 0.5);
+  border-radius: var(--r-sm);
   font-size: 11px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all .14s;
+  transition: all var(--tr);
 }
 
 .pl:first-child { margin-top: 10px; }
@@ -692,8 +878,9 @@ body {
 .pl:hover,
 .pl.sel {
   border-color: var(--ac);
-  background: var(--p3);
+  background: rgba(26, 36, 68, 0.6);
   transform: translateX(2px);
+  box-shadow: -2px 0 8px var(--ac-glow2);
 }
 
 .pl .d {
@@ -701,6 +888,7 @@ body {
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 5px currentColor;
 }
 
 .pl .n {
@@ -709,7 +897,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .pl .xb {
@@ -718,23 +906,23 @@ body {
   border-radius: 4px;
   border: none;
   background: transparent;
-  color: #666;
+  color: #555;
   cursor: pointer;
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all .12s;
+  transition: all var(--tr);
 }
 
 .pl .xb:hover {
-  background: var(--r1);
-  color: #fff;
+  background: rgba(240, 64, 64, 0.25);
+  color: var(--r1);
 }
 
 .legend {
   position: fixed;
-  bottom: 14px;
+  bottom: 42px;
   right: 14px;
   background: rgba(14, 16, 24, .98);
   border: 1px solid var(--bd);
@@ -803,99 +991,122 @@ body {
 .mo {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, .75);
+  background: rgba(0, 0, 0, .65);
   z-index: 2000;
   display: none;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
 }
 
 .mo.show { display: flex; }
 
 .mod {
-  background: var(--p1);
-  border: 1px solid var(--bd);
-  border-radius: 14px;
-  padding: 24px;
-  width: 460px;
-  max-width: 90vw;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, .8);
+  background: rgba(14, 16, 28, 0.92);
+  border: 1px solid var(--glass-bd);
+  border-radius: var(--r-xl);
+  padding: 28px;
+  width: 480px;
+  max-width: 92vw;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.05), var(--shadow-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: modal-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .mod h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 18px;
   color: #fff;
+  letter-spacing: -0.3px;
 }
 
 .mod-act {
   display: flex;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 20px;
   justify-content: flex-end;
 }
 
 .mod-act button {
-  padding: 8px 18px;
-  border-radius: 7px;
+  padding: 9px 20px;
+  border-radius: var(--r-sm);
   border: none;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   font-family: var(--sans);
-  transition: all .14s;
+  transition: all var(--tr);
 }
 
 .bxc {
-  background: var(--p2);
-  color: #aaa;
+  background: rgba(30, 34, 56, 0.8);
+  color: var(--t2);
+  border: 1px solid var(--bd);
 }
 
 .bxc:hover {
-  background: var(--p3);
+  background: rgba(40, 46, 76, 0.9);
+  color: #fff;
   transform: translateY(-1px);
 }
 
 .bxs {
-  background: var(--ac);
+  background: linear-gradient(135deg, var(--ac), hsl(230, 85%, 52%));
   color: #fff;
+  box-shadow: 0 0 0 1px var(--ac-glow), 0 4px 14px var(--ac-glow);
 }
 
 .bxs:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, var(--ac2), var(--ac));
   transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--ac-glow), 0 6px 20px var(--ac-glow);
 }
 
 .ctx {
   position: fixed;
-  background: var(--p1);
-  border: 1px solid var(--bd);
-  border-radius: 8px;
-  padding: 5px;
+  background: rgba(12, 14, 26, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-bd);
+  border-radius: var(--r-md);
+  padding: 6px;
   z-index: 3000;
   display: none;
   min-width: 180px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .7);
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.04);
+  animation: ctx-in 0.12s ease;
+}
+
+@keyframes ctx-in {
+  from { opacity: 0; transform: scale(0.94) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .ctx.show { display: block; }
 
 .ctx-i {
-  padding: 7px 13px;
+  padding: 8px 14px;
   font-size: 12px;
   color: var(--t2);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all .12s;
+  gap: 9px;
+  transition: all var(--tr);
+  font-weight: 500;
 }
 
 .ctx-i:hover {
-  background: var(--p2);
+  background: rgba(30, 40, 80, 0.6);
   color: #fff;
 }
 
@@ -904,30 +1115,37 @@ body {
 }
 
 .ctx-i.rd:hover {
-  background: #1a0a0a;
+  background: rgba(240, 64, 64, 0.15);
   color: var(--r1);
 }
 
 .toast {
   position: fixed;
-  bottom: 18px;
+  bottom: 40px;
   left: 50%;
-  transform: translateX(-50%);
-  background: var(--p2);
-  border: 1px solid var(--bd);
-  padding: 10px 22px;
-  border-radius: 9px;
+  transform: translateX(-50%) translateY(12px);
+  background: rgba(14, 16, 28, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-bd);
+  padding: 11px 24px;
+  border-radius: 32px;
   font-size: 12px;
   color: var(--t2);
   z-index: 5000;
   opacity: 0;
-  transition: opacity .3s;
+  transition: opacity 0.25s ease, transform 0.25s ease;
   pointer-events: none;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .6);
-  font-weight: 500;
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(255,255,255,0.04);
+  font-weight: 600;
+  max-width: 400px;
+  text-align: center;
 }
 
-.toast.show { opacity: 1; }
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 .pbar {
   position: fixed;
@@ -974,20 +1192,20 @@ body {
 }
 
 .tc::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 .tc::-webkit-scrollbar-track {
-  background: var(--p1);
+  background: transparent;
 }
 
 .tc::-webkit-scrollbar-thumb {
   background: var(--bd2);
-  border-radius: 5px;
+  border-radius: 10px;
 }
 
 .tc::-webkit-scrollbar-thumb:hover {
-  background: var(--bd);
+  background: rgba(100, 115, 170, 0.5);
 }
 
 .spinner {
@@ -1018,7 +1236,7 @@ canvas { image-rendering: -webkit-optimize-contrast; }
 .section-view {
   position: fixed;
   right: 14px;
-  bottom: 14px;
+  bottom: 42px;
   width: 360px;
   height: 210px;
   background: rgba(14,16,24,.92);
@@ -1039,6 +1257,71 @@ canvas { image-rendering: -webkit-optimize-contrast; }
   color: var(--t2);
 }
 .section-view canvas { width: 100%; height: calc(100% - 34px); display: block; }
+
+/* ===== STATUS BAR ===== */
+.sbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 28px;
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-bd);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  z-index: 950;
+  gap: 0;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--t3);
+  user-select: none;
+}
+.sbar-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 100%;
+  border-right: 1px solid var(--glass-bd);
+  white-space: nowrap;
+}
+.sbar-item:last-child { border-right: none; margin-left: auto; }
+.sbar-item .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--g1);
+  box-shadow: 0 0 4px var(--g1);
+}
+.sbar-item .dot.warn { background: var(--o1); box-shadow: 0 0 4px var(--o1); }
+.sbar-sp { flex: 1; }
+
+/* ===== ABOUT MODAL ===== */
+#aboutMo .mod { width: 420px; text-align: center; }
+#aboutMo .mod .about-logo {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, var(--ac), var(--purple));
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 0 30px var(--ac-glow);
+}
+#aboutMo .mod .about-logo svg { width: 30px; height: 30px; fill: #fff; }
+#aboutMo .mod .about-ver {
+  font-size: 11px; font-family: var(--mono);
+  color: var(--ac2); margin-bottom: 12px; font-weight: 700;
+}
+#aboutMo .mod .about-desc {
+  font-size: 12px; color: var(--t3); line-height: 1.6; margin-bottom: 16px;
+}
+#aboutMo .mod .about-links {
+  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;
+}
+#aboutMo .mod .about-links span {
+  font-size: 10px; font-family: var(--mono);
+  background: var(--p3); border: 1px solid var(--bd);
+  border-radius: 20px; padding: 4px 12px; color: var(--t2);
+}
 </style>
 </head>
 <body>
@@ -1102,6 +1385,7 @@ canvas { image-rendering: -webkit-optimize-contrast; }
   <button class="btn" onclick="exportProfessionalReport()" data-i18n-title="tt_report" data-i18n="report" title="Technical report">Report</button>
   <button class="btn" onclick="runDesignValidator()" data-i18n-title="tt_validate" data-i18n="validate" title="Validate design">Validate</button>
   <button class="btn" id="langBtn" onclick="toggleLanguage()" style="font-weight:800;font-size:12px">ES</button>
+  <button class="btn" onclick="showAbout()" title="Acerca de (F1)" style="opacity:0.7">?</button>
 </div>
 
 <div class="pbar" id="pbar"><div class="fill" id="pbarFill"></div></div>
@@ -1138,6 +1422,26 @@ canvas { image-rendering: -webkit-optimize-contrast; }
         <div class="inf">
           <div class="nm">FortiAP 421E</div>
           <div class="ds">WiFi 5 · 18dBm · ~25m</div>
+        </div>
+      </div>
+
+      <div class="tpl" draggable="true" ondragstart="tDrag(event,'fortiap432f')" onclick="applyAPModel('432f')">
+        <div class="ic" style="background: #c0392b;">
+          <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        </div>
+        <div class="inf">
+          <div class="nm">FortiAP 432F</div>
+          <div class="ds">WiFi 6 · 23dBm · ~32m</div>
+        </div>
+      </div>
+
+      <div class="tpl" draggable="true" ondragstart="tDrag(event,'ubnt_ac_pro')" onclick="applyAPModel('ubnt_ac_pro')">
+        <div class="ic" style="background: #e67e22;">
+          <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        </div>
+        <div class="inf">
+          <div class="nm">Ubiquiti UAP-AC-Pro</div>
+          <div class="ds">WiFi 5 · 22dBm · ~28m</div>
         </div>
       </div>
     </div>
@@ -1589,15 +1893,31 @@ canvas { image-rendering: -webkit-optimize-contrast; }
     <canvas id="zonesCvs"></canvas>
     
     <div class="welcome" id="welcome">
-      <svg viewBox="0 0 24 24">
-        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
-      </svg>
-      <h2>WiFi Planner Pro v3.1</h2>
-      <p>
-        Sistema profesional de planificación WiFi para Perú<br>
-        ✨ Alturas 3D • Dual-band • Fortinet FAP-431F • Almacenes textiles
-      </p>
-      <button class="btn on" onclick="loadPlan()">📄 Cargar plano (PDF/Imagen)</button>
+      <div class="welcome-icon">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+      </div>
+      <h2 id="wTitle">WiFi Planner Pro</h2>
+      <p id="wSubtitle">Planificación profesional de redes inalámbricas<br>para edificios, almacenes y oficinas</p>
+      <div class="welcome-cards">
+        <div class="welcome-card" onclick="loadPlan()" id="wCardLoad">
+          <span class="wc-icon">📂</span>
+          <div class="wc-title" id="wCardLoadTitle">Abrir Plano</div>
+          <div class="wc-sub" id="wCardLoadSub">Carga un PDF o imagen como base del proyecto</div>
+        </div>
+        <div class="welcome-card" onclick="newProject()" id="wCardNew">
+          <span class="wc-icon">✨</span>
+          <div class="wc-title" id="wCardNewTitle">Nuevo Proyecto</div>
+          <div class="wc-sub" id="wCardNewSub">Empieza desde cero con un lienzo en blanco</div>
+        </div>
+        <div class="welcome-card" onclick="loadSamplePlan()" id="wCardSample">
+          <span class="wc-icon">🗺️</span>
+          <div class="wc-title" id="wCardSampleTitle">Proyecto Demo</div>
+          <div class="wc-sub" id="wCardSampleSub">Carga un plano de ejemplo para explorar</div>
+        </div>
+      </div>
+      <div class="welcome-drop" id="welcomeDropZone">
+        <span class="welcome-drop-label" id="wDropLabel">📎 Arrastra un PDF o imagen aquí para comenzar</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1711,6 +2031,54 @@ canvas { image-rendering: -webkit-optimize-contrast; }
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- STATUS BAR -->
+<div class="sbar" id="sbar">
+  <div class="sbar-item">
+    <div class="dot" id="sbDot"></div>
+    <span id="sbMode">Select</span>
+  </div>
+  <div class="sbar-item">
+    <span>📡</span>
+    <span id="sbAPs">0 APs</span>
+  </div>
+  <div class="sbar-item">
+    <span id="sbPlan">Sin plano</span>
+  </div>
+  <div class="sbar-sp"></div>
+  <div class="sbar-item" style="border-right:none;margin-left:0;">
+    <span id="sbZoom">100%</span>
+    <span style="opacity:0.4">·</span>
+    <span style="opacity:0.5">WiFi Planner Pro v3.3</span>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div class="mo" id="aboutMo" onclick="if(event.target===this)hideAbout()">
+  <div class="mod" style="text-align:center">
+    <div class="about-logo">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+    </div>
+    <h3 style="margin-bottom:4px">WiFi Planner Pro</h3>
+    <div class="about-ver">v3.3 — Professional Edition</div>
+    <div class="about-desc">
+      Herramienta de planificación profesional de redes WiFi.<br>
+      Simulación de cobertura con modelo de pérdida de trayecto,<br>
+      obstáculos físicos, múltiples zonas y exportación de reportes.
+    </div>
+    <div class="about-links">
+      <span>Python 3.x + pywebview</span>
+      <span>Web Workers</span>
+      <span>Canvas 2D API</span>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:20px">
+      Optimizado para 50+ APs · Multi-core rendering
+    </div>
+    <div class="mod-act" style="justify-content:center">
+      <button class="bxs" onclick="hideAbout()">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <script>
 
@@ -2258,6 +2626,7 @@ pImg.onload = () => {
   reH();
   
   toast('✅ Plano cargado correctamente');
+  updateStatusBar();
 };
 
 async function init() {
@@ -2295,8 +2664,12 @@ async function init() {
   document.getElementById('apMountv').textContent = apMountHeight.toFixed(1);
   setUIMode('basic');
   
-  console.log('✅ Inicialización completa');
-  toast('WiFi Planner Pro v3.1 listo');
+  applyTranslations();
+  initWelcomeDrop();
+
+  console.log('✅ WiFi Planner Pro v3.3 listo');
+  toast('WiFi Planner Pro v3.3 — ' + (currentLang === 'es' ? 'Listo ✨' : 'Ready ✨'));
+  updateStatusBar();
 }
 
 function markModified() {
@@ -2308,6 +2681,7 @@ function markModified() {
       window.pywebview.api.mark_project_modified();
     }
   }
+  updateStatusBar();
 }
 
 function updateProjectStatus() {
@@ -2766,10 +3140,31 @@ async function loadPlan() {
   }
 }
 
+function loadImagePlan(dataUrl) {
+  pImg.src = dataUrl;
+}
+
+function loadPDFPlan(dataUrl) {
+  // When pywebview is available, delegate PDF rendering to Python backend
+  if (window.pywebview) {
+    window.pywebview.api.load_pdf_from_data(dataUrl)
+      .then(result => {
+        if (result && result.data) pImg.src = result.data;
+        else toast('❌ No se pudo renderizar el PDF');
+      })
+      .catch(() => toast('❌ Error al procesar PDF'));
+  } else {
+    // Browser fallback: use PDF.js if available or prompt user
+    toast('📄 PDF cargado — usa la versión de escritorio para mayor precisión');
+    pImg.src = dataUrl;
+  }
+}
+
 function upT() {
   wrap.style.transform = `translate(${px}px, ${py}px) scale(${zm})`;
   document.getElementById('zmT').textContent = Math.round(zm * 100) + '%';
   updateScaleRuler();
+  updateStatusBar();
 }
 
 function updateScaleRuler() {
@@ -2917,7 +3312,8 @@ window.addEventListener('mouseup', (e) => {
 
 function setMode(m) {
   mode = m;
-  
+  updateStatusBar();
+
   ['mSel', 'mCal', 'mDraw'].forEach(id => {
     document.getElementById(id).classList.remove('on');
   });
@@ -3464,8 +3860,22 @@ cvs.addEventListener('drop', (e) => {
   
   if (!t || !planLoaded) return;
   
+  // Map drag type to model key and color
+  const modelMap = {
+    'fortiap431f': { modelKey: '431f', color: '#0079BF' },
+    'fortiap421e': { modelKey: '421e', color: '#2E7D32' },
+    'fortiap432f': { modelKey: '432f', color: '#c0392b' },
+    'ubnt_ac_pro': { modelKey: 'ubnt_ac_pro', color: '#e67e22' }
+  };
+  
   const pos = cXY(e);
-  addAP(pos.x, pos.y, defaultColor);
+  const mapped = modelMap[t];
+  if (mapped) {
+    applyAPModel(mapped.modelKey);
+    addAP(pos.x, pos.y, mapped.color);
+  } else {
+    addAP(pos.x, pos.y, defaultColor);
+  }
 });
 
 function addAP(x, y, color, d) {
@@ -5480,7 +5890,296 @@ function validateOSIPTEL() {
   }
 }
 
+// =========================================================
+// i18n — Bilingual System (ES / EN)
+// =========================================================
+const LANGS = {
+  es: {
+    // Toolbar
+    lang_btn: 'EN',
+    new_project: '✨ Nuevo',
+    open_plan: '📂 Abrir',
+    save_project: '💾 Guardar',
+    export_report: '📋 Reporte',
+    toggle_heatmap: '🌡️ Calor',
+    toggle_waves: '📡 Ondas',
+    undo: '↩️ Deshacer',
+    redo: '↪️ Rehacer',
+
+    // Tabs
+    tab_ap: '📡 APs',
+    tab_config: '⚙️ Config',
+    tab_tools: '🔧 Herram.',
+    tab_layers: '🗂️ Capas',
+    tab_rf: '📊 RF',
+    tab_section: '📐 Sección',
+    tab_zones: '🏢 Zonas',
+
+    // Welcome hub
+    w_title: 'WiFi Planner Pro',
+    w_subtitle: 'Planificación profesional de redes inalámbricas<br>para edificios, almacenes y oficinas',
+    w_card_load_title: 'Abrir Plano',
+    w_card_load_sub: 'Carga un PDF o imagen como base del proyecto',
+    w_card_new_title: 'Nuevo Proyecto',
+    w_card_new_sub: 'Empieza desde cero con un lienzo en blanco',
+    w_card_sample_title: 'Proyecto Demo',
+    w_card_sample_sub: 'Carga un plano de ejemplo para explorar',
+    w_drop_label: '📎 Arrastra un PDF o imagen aquí para comenzar',
+
+    // Sidebar AP tab
+    drag_to_plan: 'Arrastra al plano',
+    placed: 'Colocados',
+
+    // Scale/Config tab
+    scale_config: '📐 Configuración de Escala',
+    scale_desc: 'Define la escala y DPI del plano arquitectónico',
+    scale_1x: 'Escala (1:X)',
+    apply: '✅ Aplicar',
+
+    // Toasts
+    plan_loaded: '✅ Plano cargado',
+    ap_added: 'AP agregado',
+    saved: '✅ Proyecto guardado',
+    copied: '📋 Copiado al portapapeles',
+    no_plan: 'Carga un plano primero',
+    sample_loaded: '🗺️ Plano de demo cargado',
+    project_cleared: '🗑️ Proyecto nuevo iniciado',
+  },
+  en: {
+    // Toolbar
+    lang_btn: 'ES',
+    new_project: '✨ New',
+    open_plan: '📂 Open',
+    save_project: '💾 Save',
+    export_report: '📋 Report',
+    toggle_heatmap: '🌡️ Heatmap',
+    toggle_waves: '📡 Waves',
+    undo: '↩️ Undo',
+    redo: '↪️ Redo',
+
+    // Tabs
+    tab_ap: '📡 APs',
+    tab_config: '⚙️ Config',
+    tab_tools: '🔧 Tools',
+    tab_layers: '🗂️ Layers',
+    tab_rf: '📊 RF',
+    tab_section: '📐 Section',
+    tab_zones: '🏢 Zones',
+
+    // Welcome hub
+    w_title: 'WiFi Planner Pro',
+    w_subtitle: 'Professional wireless network planning<br>for buildings, warehouses and offices',
+    w_card_load_title: 'Open Floor Plan',
+    w_card_load_sub: 'Load a PDF or image as the project base',
+    w_card_new_title: 'New Project',
+    w_card_new_sub: 'Start from scratch on a blank canvas',
+    w_card_sample_title: 'Demo Project',
+    w_card_sample_sub: 'Load a sample floor plan to explore',
+    w_drop_label: '📎 Drag a PDF or image here to start',
+
+    // Sidebar AP tab
+    drag_to_plan: 'Drag to floor plan',
+    placed: 'Placed',
+
+    // Scale/Config tab
+    scale_config: '📐 Scale Configuration',
+    scale_desc: 'Set the scale and DPI of the architectural plan',
+    scale_1x: 'Scale (1:X)',
+    apply: '✅ Apply',
+
+    // Toasts
+    plan_loaded: '✅ Floor plan loaded',
+    ap_added: 'AP added',
+    saved: '✅ Project saved',
+    copied: '📋 Copied to clipboard',
+    no_plan: 'Load a floor plan first',
+    sample_loaded: '🗺️ Demo floor plan loaded',
+    project_cleared: '🗑️ New project started',
+  }
+};
+
+let currentLang = localStorage.getItem('wfp_lang') || 'es';
+
+function t(key) {
+  return LANGS[currentLang][key] || LANGS['es'][key] || key;
+}
+
+function applyTranslations() {
+  // Welcome hub
+  const wTitle = document.getElementById('wTitle');
+  const wSub = document.getElementById('wSubtitle');
+  const wCardLoadTitle = document.getElementById('wCardLoadTitle');
+  const wCardLoadSub = document.getElementById('wCardLoadSub');
+  const wCardNewTitle = document.getElementById('wCardNewTitle');
+  const wCardNewSub = document.getElementById('wCardNewSub');
+  const wCardSampleTitle = document.getElementById('wCardSampleTitle');
+  const wCardSampleSub = document.getElementById('wCardSampleSub');
+  const wDropLabel = document.getElementById('wDropLabel');
+
+  if (wTitle) wTitle.textContent = t('w_title');
+  if (wSub) wSub.innerHTML = t('w_subtitle');
+  if (wCardLoadTitle) wCardLoadTitle.textContent = t('w_card_load_title');
+  if (wCardLoadSub) wCardLoadSub.textContent = t('w_card_load_sub');
+  if (wCardNewTitle) wCardNewTitle.textContent = t('w_card_new_title');
+  if (wCardNewSub) wCardNewSub.textContent = t('w_card_new_sub');
+  if (wCardSampleTitle) wCardSampleTitle.textContent = t('w_card_sample_title');
+  if (wCardSampleSub) wCardSampleSub.textContent = t('w_card_sample_sub');
+  if (wDropLabel) wDropLabel.textContent = t('w_drop_label');
+
+  // Lang button
+  const langBtn = document.getElementById('langBtn');
+  if (langBtn) langBtn.textContent = t('lang_btn');
+
+  // data-i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (val) el.textContent = val;
+  });
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'es' ? 'en' : 'es';
+  localStorage.setItem('wfp_lang', currentLang);
+  applyTranslations();
+  toast(currentLang === 'es' ? '🇵🇪 Español activado' : '🇺🇸 English activated');
+}
+
+// =========================================================
+// Welcome Hub — file drag-and-drop on the drop zone
+// =========================================================
+function initWelcomeDrop() {
+  const dropZone = document.getElementById('welcomeDropZone');
+  if (!dropZone) return;
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handlePlanFile(file);
+  });
+
+  // Also support drag-and-drop anywhere on the window when welcome is visible
+  window.addEventListener('dragover', (e) => {
+    if (document.getElementById('welcome')?.style.display !== 'none') {
+      e.preventDefault();
+    }
+  });
+
+  window.addEventListener('drop', (e) => {
+    const welcome = document.getElementById('welcome');
+    if (welcome && welcome.style.display !== 'none') {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file) handlePlanFile(file);
+    }
+  });
+}
+
+function handlePlanFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'].includes(ext)) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      loadImagePlan(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  } else if (ext === 'pdf') {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      loadPDFPlan(ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    toast('❌ Formato no soportado. Usa PDF, PNG o JPG.');
+  }
+}
+
+// =========================================================
+// loadSamplePlan — loads a demo blank canvas
+// =========================================================
+function loadSamplePlan() {
+  if (typeof newProject === 'function') {
+    newProject();
+    setTimeout(() => {
+      // Place 3 demo APs in the center area
+      const cx = 400, cy = 300;
+      addAP(cx - 150, cy, '#0079BF');
+      addAP(cx + 150, cy, '#0079BF');
+      addAP(cx, cy - 120, '#2E7D32');
+      toast(t('sample_loaded'));
+    }, 200);
+  }
+}
+
+// =========================================================
+// Status Bar
+// =========================================================
+const _modeLabels = {
+  select: 'Seleccionar', calibrate: 'Calibrar', draw: 'Dibujar',
+  zone: 'Zona', pan: 'Pan'
+};
+
+function updateStatusBar() {
+  const sbMode = document.getElementById('sbMode');
+  const sbAPs = document.getElementById('sbAPs');
+  const sbPlan = document.getElementById('sbPlan');
+  const sbZoom = document.getElementById('sbZoom');
+  const sbDot = document.getElementById('sbDot');
+
+  if (sbMode) sbMode.textContent = _modeLabels[mode] || mode;
+  if (sbAPs) sbAPs.textContent = aps.length + ' AP' + (aps.length !== 1 ? 's' : '');
+  if (sbPlan) sbPlan.textContent = planLoaded ? '🗺️ ' + projectName : 'Sin plano';
+  if (sbZoom) {
+    const zmEl = document.getElementById('zmT');
+    if (zmEl) sbZoom.textContent = zmEl.textContent;
+  }
+  if (sbDot) {
+    sbDot.className = 'dot' + (projectModified ? ' warn' : '');
+  }
+}
+
+// =========================================================
+// About Dialog
+// =========================================================
+function showAbout() {
+  document.getElementById('aboutMo').classList.add('show');
+}
+function hideAbout() {
+  document.getElementById('aboutMo').classList.remove('show');
+}
+
+// Hook F1 to open About
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'F1') { ev.preventDefault(); showAbout(); }
+});
+
+// =========================================================
+// Save window config on page unload
+// =========================================================
+window.addEventListener('beforeunload', () => {
+  if (window.pywebview) {
+    try {
+      window.pywebview.api.save_window_config(
+        window.outerWidth, window.outerHeight,
+        window.screenX, window.screenY
+      );
+    } catch(e) {}
+  }
+});
+
 init();
+
 </script>
 
 </body>

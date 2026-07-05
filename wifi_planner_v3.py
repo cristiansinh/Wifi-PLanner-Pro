@@ -8,11 +8,51 @@ import threading
 from pathlib import Path
 from typing import Optional, Dict, Any
 import time
+import logging
 
 if sys.platform == 'win32':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+# --- App data / config / logging ---
+_APP_DATA = Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'WiFiPlannerPro'
+_APP_DATA.mkdir(parents=True, exist_ok=True)
+_LOG_FILE = _APP_DATA / 'wifi_planner.log'
+_CONFIG_FILE = _APP_DATA / 'config.json'
+
+logging.basicConfig(
+    filename=str(_LOG_FILE),
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    encoding='utf-8',
+)
+logger = logging.getLogger(__name__)
+
+_DEFAULT_CONFIG: Dict[str, Any] = {
+    'window': {'width': 1700, 'height': 1000, 'x': None, 'y': None},
+    'last_dir': '',
+}
+
+def _load_config() -> Dict[str, Any]:
+    try:
+        if _CONFIG_FILE.exists():
+            with open(_CONFIG_FILE, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+            for k, v in _DEFAULT_CONFIG.items():
+                if k not in cfg:
+                    cfg[k] = v
+            return cfg
+    except Exception as e:
+        logger.warning('Error loading config: %s', e)
+    return _DEFAULT_CONFIG.copy()
+
+def _save_config(cfg: Dict[str, Any]) -> None:
+    try:
+        with open(_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(cfg, f, indent=2)
+    except Exception as e:
+        logger.warning('Error saving config: %s', e)
 
 if sys.platform == 'win32':
     try:
@@ -316,6 +356,14 @@ class OptimizedAPIv3:
     def mark_project_modified(self) -> None:
         self.project_manager.mark_modified()
 
+    def save_window_config(self, width: int, height: int, x: int, y: int) -> None:
+        cfg = _load_config()
+        cfg['window'] = {'width': int(width), 'height': int(height), 'x': int(x), 'y': int(y)}
+        _save_config(cfg)
+
+    def get_config(self) -> Dict[str, Any]:
+        return _load_config()
+
 
 def main():
     print("=" * 60)
@@ -336,11 +384,15 @@ def main():
         sys.exit(1)
     print(f"✅ Interfaz encontrada: {os.path.basename(html_path)}")
     print()
+    _cfg = _load_config()
+    _wcfg = _cfg.get('window', _DEFAULT_CONFIG['window'])
     window = webview.create_window(
         title='WiFi Planner Pro v3.3 — Professional Edition',
         url=html_path,
-        width=1700,
-        height=1000,
+        width=_wcfg.get('width', 1700),
+        height=_wcfg.get('height', 1000),
+        x=_wcfg.get('x'),
+        y=_wcfg.get('y'),
         min_size=(1400, 800),
         resizable=True,
         confirm_close=True,
@@ -356,15 +408,30 @@ def main():
         api.save_project_as,
         api.load_project,
         api.export_png,
-        api.mark_project_modified
+        api.mark_project_modified,
+        api.save_window_config,
+        api.get_config
     )
     print("🚀 Iniciando aplicación...")
+    logger.info('WiFi Planner Pro v3.3 starting — config: %s', _wcfg)
     print()
     webview.start(
         debug=False,
         http_server=True,
         gui='edgechromium' if sys.platform == 'win32' else None
     )
+    try:
+        _cfg = _load_config()
+        _cfg['window'] = {
+            'width': window.width,
+            'height': window.height,
+            'x': window.x,
+            'y': window.y,
+        }
+        _save_config(_cfg)
+        logger.info('Window config saved on close')
+    except Exception as e:
+        logger.warning('Could not save window config on close: %s', e)
     print()
     print("👋 Cerrando aplicación...")
     gc.collect()
